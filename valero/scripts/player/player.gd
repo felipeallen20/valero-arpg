@@ -27,8 +27,20 @@ const COYOTE_TIME := 0.12        # Segundos de gracia tras dejar el suelo.
 const JUMP_BUFFER_TIME := 0.12   # Segundos que se recuerda una pulsación de salto.
 
 const TURN_SPEED := 18.0         # Rapidez con la que el cuerpo encara hacia la marcha.
-var dodge_speed := 8.0
-const dodge_iframes := 7.5
+
+# --- Dash ---
+const DODGE_SPEED := 24.0        # Velocidad inicial del dash (m/s).
+const DODGE_DURATION := 0.25     # ≈ 3.4 m de distancia con la curva de abajo.
+const DODGE_COOLDOWN := 0.40
+const DODGE_IFRAMES := 0.22
+
+var _is_dodging := false
+var _dodge_time_left := 0.0
+var _dodge_cooldown_left := 0.0
+var _dodge_direction := Vector3.ZERO
+var _is_invulnerable := false
+var _iframe_time_left := 0.0
+var _air_dash_available := true
 
 # --- Referencias ---
 @onready var _camera_pivot: Node3D = $ThirdPerson
@@ -50,15 +62,22 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_update_dodge_timers(delta)
 	_update_jump_assist(delta)
 	_apply_gravity(delta)
 	_try_jump()
-	_try_attack()
+	_try_dodge()
 
-	var direction := _input_direction()
-	_apply_horizontal_movement(direction, delta)
+	if _is_dodging:
+		_apply_dodge_movement()
+	else:
+		_try_attack()
+
+		var direction := _input_direction()
+		_apply_horizontal_movement(direction, delta)
+		_turn_body(direction, delta)
+
 	move_and_slide()
-	_turn_body(direction, delta)
 
 
 # --- Salto ---
@@ -142,3 +161,66 @@ func _try_attack() -> void:
 		return  # con el mouse liberado (Esc) el clic no debe atacar
 	if Input.is_action_pressed("attack"):
 		_weapon.attack()
+		
+# --- Dash ---
+func _try_dodge() -> void:
+	if not Input.is_action_just_pressed("dodge"):
+		return
+	if _is_dodging or _dodge_cooldown_left > 0.0:
+		return
+	# Un solo dash en el aire por salto; se recarga al tocar el suelo.
+	if not is_on_floor() and not _air_dash_available:
+		return
+	_start_dodge()
+
+
+func _start_dodge() -> void:
+	_is_dodging = true
+	_dodge_time_left = DODGE_DURATION
+	_dodge_cooldown_left = DODGE_COOLDOWN
+
+	if not is_on_floor():
+		_air_dash_available = false
+
+	# Si hay input, se dashea hacia donde pulsas; si no, hacia donde mira el cuerpo.
+	var dir := _input_direction()
+	if dir == Vector3.ZERO:
+		dir = -global_basis.z
+	dir.y = 0.0
+	_dodge_direction = dir.normalized()
+
+	# El cuerpo encara el dash al instante (el giro normal está pausado durante el dash).
+	rotation.y = atan2(-_dodge_direction.x, -_dodge_direction.z)
+
+	_is_invulnerable = true
+	_iframe_time_left = DODGE_IFRAMES
+
+
+func _apply_dodge_movement() -> void:
+	# Arranca a DODGE_SPEED y baja hasta SPEED: sale con tirón y termina
+	# fluido, enlazando con la carrera sin frenazo.
+	var t := 1.0 - (_dodge_time_left / DODGE_DURATION)
+	var speed := lerpf(DODGE_SPEED, SPEED, t * t)
+	velocity.x = _dodge_direction.x * speed
+	velocity.z = _dodge_direction.z * speed
+
+	# En el aire el dash es horizontal: sin gravedad mientras dura.
+	if not is_on_floor():
+		velocity.y = 0.0
+
+
+func _update_dodge_timers(delta: float) -> void:
+	_dodge_cooldown_left = maxf(_dodge_cooldown_left - delta, 0.0)
+
+	if is_on_floor():
+		_air_dash_available = true
+
+	if _is_dodging:
+		_dodge_time_left -= delta
+		if _dodge_time_left <= 0.0:
+			_is_dodging = false
+
+	if _is_invulnerable:
+		_iframe_time_left -= delta
+		if _iframe_time_left <= 0.0:
+			_is_invulnerable = false
