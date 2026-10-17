@@ -34,6 +34,10 @@ const DODGE_DURATION := 0.25     # ≈ 3.4 m de distancia con la curva de abajo.
 const DODGE_COOLDOWN := 0.40
 const DODGE_IFRAMES := 0.22
 
+const DODGE_STAMINA_COST := 25.0
+
+@onready var stats: PlayerStats = $PlayerStats
+
 var _is_dodging := false
 var _dodge_time_left := 0.0
 var _dodge_cooldown_left := 0.0
@@ -59,6 +63,7 @@ func _ready() -> void:
 	# evitando que "flote" o pierda el contacto al bajar rampas suaves.
 	floor_snap_length = 0.3
 	_weapon.wielder = self
+	stats.died.connect(_on_died)
 
 
 func _physics_process(delta: float) -> void:
@@ -78,6 +83,7 @@ func _physics_process(delta: float) -> void:
 		_turn_body(direction, delta)
 
 	move_and_slide()
+	stats.invulnerable = _is_invulnerable
 
 
 # --- Salto ---
@@ -168,6 +174,9 @@ func _try_dodge() -> void:
 		return
 	if _is_dodging or _dodge_cooldown_left > 0.0:
 		return
+	if not stats.use_stamina(DODGE_STAMINA_COST):
+		return
+		_start_dodge()
 	# Un solo dash en el aire por salto; se recarga al tocar el suelo.
 	if not is_on_floor() and not _air_dash_available:
 		return
@@ -224,3 +233,7 @@ func _update_dodge_timers(delta: float) -> void:
 		_iframe_time_left -= delta
 		if _iframe_time_left <= 0.0:
 			_is_invulnerable = false
+
+func _on_died() -> void:
+	set_physics_process(false)
+	print("Jugador muerto")

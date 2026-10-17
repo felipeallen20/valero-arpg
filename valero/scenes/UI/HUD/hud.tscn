@@ -1,0 +1,28 @@
+[gd_scene format=3 uid="uid://brnr1b1ay3jen"]
+
+[ext_resource type="Script" uid="uid://cj8a1spxb818l" path="res://scripts/UI/hud.gd" id="1_5f3yu"]
+
+[node name="HUD" type="CanvasLayer" unique_id=1768720518]
+script = ExtResource("1_5f3yu")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=861371815]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1384896334]
+layout_mode = 2
+size_flags_horizontal = 0
+
+[node name="HealthBar" type="ProgressBar" parent="MarginContainer/VBoxContainer" unique_id=1065543005]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 16)
+layout_mode = 2
+size_flags_horizontal = 0
+show_percentage = false
+
+[node name="StaminaBar" type="ProgressBar" parent="MarginContainer/VBoxContainer" unique_id=1357083118]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 10)
+layout_mode = 2
+size_flags_horizontal = 0
+show_percentage = false

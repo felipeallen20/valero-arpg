@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://cuv0ovrg8ql0y" path="res://scripts/player/player.gd" id="1_3vyb7"]
 [ext_resource type="Script" uid="uid://d0g2w5ly45ill" path="res://scripts/player/player_camera.gd" id="2_g2els"]
 [ext_resource type="PackedScene" uid="uid://c5sjv3oxst7b3" path="res://scenes/weapons/practice_sword.tscn" id="3_qhqgy"]
+[ext_resource type="Script" uid="uid://c5oen0j314vy5" path="res://scripts/player/player_stats.gd" id="4_dqkch"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_qhqgy"]
 
@@ -33,3 +34,6 @@ current = true
 
 [node name="PracticeSword" parent="." unique_id=938474064 instance=ExtResource("3_qhqgy")]
 transform = Transform3D(1.75, 0, 0, 0, 1.75, 0, 0, 0, 1.75, 0.51834464, -0.357847, -0.37549663)
+
+[node name="PlayerStats" type="Node3D" parent="." unique_id=1662973353]
+script = ExtResource("4_dqkch")
