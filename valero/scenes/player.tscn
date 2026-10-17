@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://bbkopmp5481wl"]
+
+[ext_resource type="Script" uid="uid://cuv0ovrg8ql0y" path="res://scripts/player/player.gd" id="1_3vyb7"]
+[ext_resource type="Script" uid="uid://d0g2w5ly45ill" path="res://scripts/player/player_camera.gd" id="2_g2els"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_qhqgy"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_g2els"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_nb4d6"]
+margin = 0.15
+radius = 0.3
+
+[node name="Player" type="CharacterBody3D" unique_id=2042077057]
+script = ExtResource("1_3vyb7")
+
+[node name="Model" type="MeshInstance3D" parent="." unique_id=1021120597]
+mesh = SubResource("CapsuleMesh_qhqgy")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1977635930]
+shape = SubResource("CapsuleShape3D_g2els")
+
+[node name="ThirdPerson" type="Node3D" parent="." unique_id=1706134680]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 3)
+script = ExtResource("2_g2els")
+
+[node name="SpringArm3D" type="SpringArm3D" parent="ThirdPerson" unique_id=1157389235]
+shape = SubResource("SphereShape3D_nb4d6")
+
+[node name="Camera3D" type="Camera3D" parent="ThirdPerson/SpringArm3D" unique_id=140741032]
+current = true

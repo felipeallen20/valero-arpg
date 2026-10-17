@@ -1,0 +1,127 @@
+extends CharacterBody3D
+
+const SPEED := 6.5              # Velocidad máxima en el suelo (m/s).
+const ACCELERATION := 40.0      # Aceleración en el suelo (m/s²).
+const DECELERATION := 45.0      # Frenado al soltar las teclas (m/s²).
+
+# Control aéreo. AIR_ACCELERATION debe ser alto para poder corregir la dirección
+# en pleno salto (útil para explorar y esquivar); el rozamiento aéreo es suave
+# para no cortar el impulso de un salto lanzado.
+const AIR_ACCELERATION := 22.0  # Aceleración al dirigir en el aire (m/s²).
+const AIR_DECELERATION := 8.0   # Rozamiento aéreo al no pulsar nada (m/s²).
+
+# Salto. La altura se obtiene de JUMP_VELOCITY con la gravedad de subida; la
+# caída usa más gravedad para aterrizar rápido y sentirse ágil. Al soltar el
+# botón durante la subida se recorta el impulso para permitir saltos de altura
+# variable.
+const JUMP_VELOCITY := 6.0          # Impulso del salto (m/s). Altura ≈ 1.8 m.
+const JUMP_CUT_MULTIPLIER := 0.45   # Recorte de impulso al soltar el salto subiendo.
+const GRAVITY_SCALE_RISE := 1.0     # Gravedad mientras se sube (ligera).
+const GRAVITY_SCALE_FALL := 1.8     # Gravedad mientras se cae (pesada = aterrizaje rápido).
+const MAX_FALL_SPEED := 30.0        # Velocidad de caída máxima (m/s).
+
+# Asistencia al salto para que no se pierda ninguna pulsación:
+#   - Coyote time: aún se puede saltar un instante después de dejar el borde.
+#   - Jump buffer: pulsar un poco antes de tocar el suelo guarda el salto.
+const COYOTE_TIME := 0.12        # Segundos de gracia tras dejar el suelo.
+const JUMP_BUFFER_TIME := 0.12   # Segundos que se recuerda una pulsación de salto.
+
+const TURN_SPEED := 18.0         # Rapidez con la que el modelo mira hacia la marcha.
+
+# --- Referencias ---
+@onready var _camera_pivot: Node3D = $ThirdPerson
+@onready var _model: Node3D = $Model
+
+# --- Estado ---
+# Se toma la gravedad del proyecto en lugar de fijar una propia, para respetar
+# la configuración global de física.
+var _gravity: float = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
+var _coyote_time_left := 0.0
+var _jump_buffer_left := 0.0
+
+
+func _ready() -> void:
+	# Mantiene al jugador pegado al suelo en pendientes y escalones pequeños,
+	# evitando que "flote" o pierda el contacto al bajar rampas suaves.
+	floor_snap_length = 0.3
+
+
+func _physics_process(delta: float) -> void:
+	_update_jump_assist(delta)
+	_apply_gravity(delta)
+	_try_jump()
+
+	var direction := _input_direction()
+	_apply_horizontal_movement(direction, delta)
+	move_and_slide()
+	_turn_model(direction, delta)
+
+
+# --- Salto ---
+# Actualiza los temporizadores de asistencia (coyote time y buffer de salto) y
+# aplica el recorte de altura si se suelta el botón durante la subida.
+func _update_jump_assist(delta: float) -> void:
+	if is_on_floor():
+		_coyote_time_left = COYOTE_TIME
+	else:
+		_coyote_time_left = maxf(_coyote_time_left - delta, 0.0)
+
+	if Input.is_action_just_pressed("jump"):
+		_jump_buffer_left = JUMP_BUFFER_TIME
+	else:
+		_jump_buffer_left = maxf(_jump_buffer_left - delta, 0.0)
+
+	# Salto de altura variable: soltar pronto corta el impulso ascendente.
+	if velocity.y > 0.0 and Input.is_action_just_released("jump"):
+		velocity.y *= JUMP_CUT_MULTIPLIER
+
+
+func _try_jump() -> void:
+	if _jump_buffer_left > 0.0 and _coyote_time_left > 0.0:
+		velocity.y = JUMP_VELOCITY
+		# Se consumen ambos para no permitir un segundo salto en el aire.
+		_jump_buffer_left = 0.0
+		_coyote_time_left = 0.0
+
+
+# --- Gravedad ---
+func _apply_gravity(delta: float) -> void:
+	if is_on_floor():
+		return
+	var gravity_scale := GRAVITY_SCALE_RISE if velocity.y > 0.0 else GRAVITY_SCALE_FALL
+	velocity.y -= _gravity * gravity_scale * delta
+	velocity.y = maxf(velocity.y, -MAX_FALL_SPEED)
+
+
+# --- Movimiento horizontal ---
+# Dirección de avance en coordenadas de mundo, tomando como referencia el giro
+# de la cámara: "adelante" siempre es hacia donde mira la cámara.
+func _input_direction() -> Vector3:
+	var input_vec := Input.get_vector("left", "right", "forward", "backward")
+	if input_vec == Vector2.ZERO:
+		return Vector3.ZERO
+	var yaw := _camera_pivot.global_rotation.y
+	return (Basis(Vector3.UP, yaw) * Vector3(input_vec.x, 0.0, input_vec.y)).normalized()
+
+
+func _apply_horizontal_movement(direction: Vector3, delta: float) -> void:
+	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
+	if direction == Vector3.ZERO:
+		var decel := DECELERATION if is_on_floor() else AIR_DECELERATION
+		horizontal = horizontal.move_toward(Vector3.ZERO, decel * delta)
+	else:
+		var accel := ACCELERATION if is_on_floor() else AIR_ACCELERATION
+		horizontal = horizontal.move_toward(direction * SPEED, accel * delta)
+	velocity.x = horizontal.x
+	velocity.z = horizontal.z
+
+
+# --- Orientación del modelo ---
+# El frente del modelo es -Z (convención de Godot). Se interpola el giro para
+# que el personaje mire hacia donde avanza sin dar giros bruscos.
+func _turn_model(direction: Vector3, delta: float) -> void:
+	if direction == Vector3.ZERO:
+		return
+	var target_angle := atan2(-direction.x, -direction.z)
+	var current_rotation := _model.rotation.y
+	_model.rotation.y = lerp_angle(current_rotation, target_angle, clampf(TURN_SPEED * delta, 0.0, 1.0))
