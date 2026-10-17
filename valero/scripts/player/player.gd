@@ -26,11 +26,12 @@ const MAX_FALL_SPEED := 30.0        # Velocidad de caída máxima (m/s).
 const COYOTE_TIME := 0.12        # Segundos de gracia tras dejar el suelo.
 const JUMP_BUFFER_TIME := 0.12   # Segundos que se recuerda una pulsación de salto.
 
-const TURN_SPEED := 18.0         # Rapidez con la que el modelo mira hacia la marcha.
+const TURN_SPEED := 18.0         # Rapidez con la que el cuerpo encara hacia la marcha.
+var dodge_speed := 8.0
+const dodge_iframes := 7.5
 
 # --- Referencias ---
 @onready var _camera_pivot: Node3D = $ThirdPerson
-@onready var _model: Node3D = $Model
 @onready var _weapon: Weapon = $PracticeSword   # ← ajusta a tu ruta real
 
 # --- Estado ---
@@ -57,7 +58,7 @@ func _physics_process(delta: float) -> void:
 	var direction := _input_direction()
 	_apply_horizontal_movement(direction, delta)
 	move_and_slide()
-	_turn_model(direction, delta)
+	_turn_body(direction, delta)
 
 
 # --- Salto ---
@@ -119,14 +120,20 @@ func _apply_horizontal_movement(direction: Vector3, delta: float) -> void:
 	velocity.z = horizontal.z
 
 
-# --- Orientación del modelo ---
-# El frente del modelo es -Z (convención de Godot). Se interpola el giro para
-# que el personaje mire hacia donde avanza sin dar giros bruscos.
-func _turn_model(direction: Vector3, delta: float) -> void:
-	if direction == Vector3.ZERO:
-		return
-	var target_angle := atan2(-direction.x, -direction.z)
-	_model.rotation.y = lerp_angle(_model.rotation.y, target_angle, 1.0 - exp(-TURN_SPEED * delta))
+# --- Orientación del cuerpo ---
+# El frente del cuerpo es -Z (convención de Godot). Se interpola el giro para
+# que el personaje mire hacia donde avanza sin dar giros bruscos. Cuando no hay
+# desplazamiento, encara hacia donde mira la cámara para acompañar su giro.
+#
+# Se rota el Player completo (y no solo $Model) porque la espada cuelga del
+# Player: así modelo y arma giran juntos y el giro se ve en pantalla.
+func _turn_body(direction: Vector3, delta: float) -> void:
+	var facing := direction
+	if facing == Vector3.ZERO:
+		# "Adelante" es hacia donde mira la cámara (misma convención que _input_direction).
+		facing = Basis(Vector3.UP, _camera_pivot.global_rotation.y) * Vector3.FORWARD
+	var target_angle := atan2(-facing.x, -facing.z)
+	rotation.y = lerp_angle(rotation.y, target_angle, 1.0 - exp(-TURN_SPEED * delta))
 
 # --- Ataque ---
 # Mantener el clic encadena ataques; el cooldown del arma marca el ritmo.
