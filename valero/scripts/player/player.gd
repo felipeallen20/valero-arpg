@@ -123,5 +123,4 @@ func _turn_model(direction: Vector3, delta: float) -> void:
 	if direction == Vector3.ZERO:
 		return
 	var target_angle := atan2(-direction.x, -direction.z)
-	var current_rotation := _model.rotation.y
-	_model.rotation.y = lerp_angle(current_rotation, target_angle, clampf(TURN_SPEED * delta, 0.0, 1.0))
+	_model.rotation.y = lerp_angle(_model.rotation.y, target_angle, 1.0 - exp(-TURN_SPEED * delta))
