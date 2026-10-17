@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cuv0ovrg8ql0y" path="res://scripts/player/player.gd" id="1_3vyb7"]
 [ext_resource type="Script" uid="uid://d0g2w5ly45ill" path="res://scripts/player/player_camera.gd" id="2_g2els"]
+[ext_resource type="PackedScene" uid="uid://c5sjv3oxst7b3" path="res://scenes/weapons/practice_sword.tscn" id="3_qhqgy"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_qhqgy"]
 
@@ -29,3 +30,6 @@ shape = SubResource("SphereShape3D_nb4d6")
 
 [node name="Camera3D" type="Camera3D" parent="ThirdPerson/SpringArm3D" unique_id=140741032]
 current = true
+
+[node name="PracticeSword" parent="." unique_id=938474064 instance=ExtResource("3_qhqgy")]
+transform = Transform3D(1.75, 0, 0, 0, 1.75, 0, 0, 0, 1.75, 0.51834464, -0.357847, -0.37549663)

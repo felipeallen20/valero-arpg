@@ -19,13 +19,14 @@ albedo_texture = ExtResource("4_auo53")
 albedo_texture = ExtResource("5_rt4hf")
 
 [node name="PracticeSword" type="Node3D" unique_id=938474064]
+transform = Transform3D(1.75, 0, 0, 0, 1.75, 0, 0, 0, 1.75, 0, -0.16624108, 0)
 script = ExtResource("1_hvg78")
 
 [node name="Hitbox" type="Area3D" parent="." unique_id=563772348]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.0025238395, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Hitbox" unique_id=1771601606]
-transform = Transform3D(0.1, 0, 0, 0, 0.5, 0, 0, 0, 0.05, 0, 0.65761334, 0.014994204)
+transform = Transform3D(0.1, 0, 0, 0, 0.5, 0, 0, 0, 0.05, 0.0071227048, 0.6641387, 0.020778982)
 shape = SubResource("BoxShape3D_jxsi6")
 
 [node name="Mesh" type="MeshInstance3D" parent="." unique_id=1804440856]
