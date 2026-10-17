@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://dbrdyhkcvccbv"]
+
+[ext_resource type="Script" uid="uid://4qnwyajakm1s" path="res://scripts/enemies/enemy.gd" id="1_7p1mj"]
+[ext_resource type="Script" uid="uid://5fl5kcfj1p7c" path="res://scripts/enemies/UI/health_bar_3d.gd" id="2_md0e3"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_nb4d6"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wwd58"]
+albedo_color = Color(0.7397003, 0.262786, 0.33306265, 1)
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_t2dqk"]
+
+[node name="Enemy" type="CharacterBody3D" unique_id=703695394]
+collision_layer = 4
+script = ExtResource("1_7p1mj")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1474738438]
+mesh = SubResource("CapsuleMesh_nb4d6")
+surface_material_override/0 = SubResource("StandardMaterial3D_wwd58")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1183101584]
+shape = SubResource("CapsuleShape3D_t2dqk")
+
+[node name="HealthBar" type="Node3D" parent="." unique_id=2007094503]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4517548, 0)
+script = ExtResource("2_md0e3")

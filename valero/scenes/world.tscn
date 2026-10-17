@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cgxdi2i8d34kg" path="res://scripts/world/world.gd" id="1_nnsk1"]
 [ext_resource type="PackedScene" uid="uid://bbkopmp5481wl" path="res://scenes/player.tscn" id="2_rwgxs"]
+[ext_resource type="PackedScene" uid="uid://dbrdyhkcvccbv" path="res://scenes/enemy.tscn" id="3_4wyf3"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_wwd58"]
 
@@ -25,3 +26,6 @@ mesh = SubResource("BoxMesh_nb4d6")
 transform = Transform3D(0.8660254, 0.38302222, -0.32139382, 0, 0.64278764, 0.76604444, 0.5, -0.66341394, 0.5566704, 50, 50, 50)
 
 [node name="Player" parent="." unique_id=2042077057 instance=ExtResource("2_rwgxs")]
+
+[node name="Enemy" parent="." unique_id=703695394 instance=ExtResource("3_4wyf3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.019, 1.2, -3.34)

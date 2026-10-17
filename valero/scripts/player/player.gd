@@ -31,6 +31,7 @@ const TURN_SPEED := 18.0         # Rapidez con la que el modelo mira hacia la ma
 # --- Referencias ---
 @onready var _camera_pivot: Node3D = $ThirdPerson
 @onready var _model: Node3D = $Model
+@onready var _weapon: Weapon = $PracticeSword   # ← ajusta a tu ruta real
 
 # --- Estado ---
 # Se toma la gravedad del proyecto en lugar de fijar una propia, para respetar
@@ -44,12 +45,14 @@ func _ready() -> void:
 	# Mantiene al jugador pegado al suelo en pendientes y escalones pequeños,
 	# evitando que "flote" o pierda el contacto al bajar rampas suaves.
 	floor_snap_length = 0.3
+	_weapon.wielder = self
 
 
 func _physics_process(delta: float) -> void:
 	_update_jump_assist(delta)
 	_apply_gravity(delta)
 	_try_jump()
+	_try_attack()
 
 	var direction := _input_direction()
 	_apply_horizontal_movement(direction, delta)
@@ -124,3 +127,11 @@ func _turn_model(direction: Vector3, delta: float) -> void:
 		return
 	var target_angle := atan2(-direction.x, -direction.z)
 	_model.rotation.y = lerp_angle(_model.rotation.y, target_angle, 1.0 - exp(-TURN_SPEED * delta))
+
+# --- Ataque ---
+# Mantener el clic encadena ataques; el cooldown del arma marca el ritmo.
+func _try_attack() -> void:
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		return  # con el mouse liberado (Esc) el clic no debe atacar
+	if Input.is_action_pressed("attack"):
+		_weapon.attack()
