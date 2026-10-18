@@ -256,14 +256,14 @@ func _turn_body(direction: Vector3, delta: float) -> void:
 	rotation.y = lerp_angle(rotation.y, target_angle, 1.0 - exp(-TURN_SPEED * delta))
 
 # --- Ataque ---
-# Mantener el clic encadena ataques; el cooldown del marca el ritmo.
+# Mantener el clic encadena ataques; el cooldown del arma marca el ritmo.
+# El combo NO avanza aquí: solo avanza si el golpe conecta con un enemigo
+# (el arma lo notifica vía register_combo_hit).
 func _try_attack() -> void:
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		return  # con el mouse liberado (Esc) el clic no debe atacar
 	if Input.is_action_pressed("attack"):
-		# Solo avanza el combo si el arma aceptó el ataque (cooldown listo).
-		if _weapon.attack():
-			_advance_combo()
+		_weapon.attack()
 		
 # --- Dash ---
 func _try_dodge() -> void:
@@ -367,9 +367,10 @@ func is_combo_active() -> bool:
 	return _weapon != null and _weapon.is_combo_active_for(combo_count)
 
 
-## Registra un golpe del arma actual: suma al combo y reinicia la ventana de
-## gracia definida por el arma.
-func _advance_combo() -> void:
+## Lo llama el arma cuando un golpe conecta con un objetivo. Suma al combo y
+## reinicia la ventana de gracia definida por el arma. Los swings que fallan
+## no pasan por aquí, así que no avanzan el combo.
+func register_combo_hit() -> void:
 	combo_count += 1
 	_combo_time_left = _weapon.combo_window
 	combo_changed.emit(combo_count, is_combo_active())

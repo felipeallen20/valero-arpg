@@ -1,7 +1,8 @@
 class_name Enemy
-extends CharacterBody3D
+extends EnemyBase
 
-signal died
+## Enemigo cuerpo a cuerpo: persigue al jugador y golpea a corta distancia.
+## La vida, el daño recibido y la muerte viven en EnemyBase.
 
 enum State { CHASE, ATTACK, DEAD }
 
@@ -23,25 +24,15 @@ enum State { CHASE, ATTACK, DEAD }
 @export var attack_windup := 0.30      # Segundos de telegrafiado antes de pegar.
 @export var attack_cooldown := 1.20    # Segundos entre golpes.
 
-# --- Vida ---
-@export_group("Vida")
-@export var max_health := 75.0
-
-@onready var _health_bar: HealthBar3D = $HealthBar
-
-var health := 0.0
 var _state: State = State.CHASE
 var _player: Node3D
 var _player_stats: PlayerStats
 var _windup_left := 0.0
 var _cooldown_left := 0.0
-var _gravity: float = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
 
 
 func _ready() -> void:
-	health = max_health
-	_health_bar.set_ratio(1.0, false)
-	floor_snap_length = 0.3
+	super._ready()
 	_resolve_player()
 
 
@@ -167,26 +158,6 @@ func _update_timers(delta: float) -> void:
 	_cooldown_left = maxf(_cooldown_left - delta, 0.0)
 
 
-func _apply_gravity(delta: float) -> void:
-	if is_on_floor():
-		return
-	velocity.y -= _gravity * delta
-
-
-# --- Daño recibido ---
-func take_damage(amount: float) -> void:
-	if health <= 0.0:
-		return
-	health = maxf(health - amount, 0.0)
-	_health_bar.set_ratio(health / max_health)
-	# Número de daño flotante. Se añade a la escena actual (no al enemigo)
-	# para que el golpe letal siga mostrándose aunque el enemigo muera.
-	DamageNumber.spawn(get_tree().current_scene, global_position, amount)
-	if health <= 0.0:
-		_die()
-
-
 func _die() -> void:
 	_state = State.DEAD
-	died.emit()
-	queue_free()
+	super._die()

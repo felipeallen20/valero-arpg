@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_ranged.gd" id="1_rnge1"]
+[ext_resource type="Script" uid="uid://5fl5kcfj1p7c" path="res://scripts/enemies/UI/health_bar_3d.gd" id="2_rnge2"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_rnge"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rnge"]
+albedo_color = Color(0.28, 0.68, 0.34, 1)
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_rnge"]
+
+[node name="EnemyRanged" type="CharacterBody3D"]
+collision_layer = 4
+script = ExtResource("1_rnge1")
+
+[node name="Model" type="MeshInstance3D" parent="."]
+mesh = SubResource("CapsuleMesh_rnge")
+surface_material_override/0 = SubResource("StandardMaterial3D_rnge")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_rnge")
+
+[node name="HealthBar" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4517548, 0)
+script = ExtResource("2_rnge2")

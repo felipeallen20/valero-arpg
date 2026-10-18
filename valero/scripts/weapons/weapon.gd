@@ -27,6 +27,9 @@ signal attacked
 var wielder: Node3D
 
 var _next_attack_time_ms := 0
+# true si el swing en curso ya contó para el combo. Evita que un golpe que
+# atraviesa a varios enemigos de un solo swing sume el combo varias veces.
+var _combo_counted_this_swing := false
 
 
 func can_attack() -> bool:
@@ -34,11 +37,13 @@ func can_attack() -> bool:
 
 
 ## Intenta atacar. Devuelve true si el ataque se ejecutó.
-## El avance del combo lo registra el empuñador al recibir un true.
+## El combo NO avanza aquí: solo lo hace si el golpe conecta con un objetivo
+## (ver _deal_damage). Así fallar el swing no suma combo.
 func attack() -> bool:
 	if not can_attack():
 		return false
 	_next_attack_time_ms = Time.get_ticks_msec() + int(1000.0 / maxf(attack_speed, 0.01))
+	_combo_counted_this_swing = false
 	_perform_attack()
 	attacked.emit()
 	return true
@@ -73,11 +78,24 @@ func get_current_damage() -> float:
 
 
 ## Aplica el daño del arma a un objetivo, si sabe recibirlo.
+## Este es el punto donde el golpe se considera "conectado": solo entonces
+## (y una única vez por swing) avanza el combo del empuñador.
 func _deal_damage(target: Node) -> void:
 	if target == wielder:
 		return
 	if target.has_method("take_damage"):
 		target.take_damage(get_current_damage())
+		_register_combo_hit()
+
+
+## Informa al empuñador de que el swing conectó, para que sume a su combo.
+## Como mucho una vez por swing, aunque el golpe toque varios objetivos.
+func _register_combo_hit() -> void:
+	if _combo_counted_this_swing:
+		return
+	_combo_counted_this_swing = true
+	if wielder != null and wielder.has_method("register_combo_hit"):
+		wielder.register_combo_hit()
 
 
 ## Golpes de combo actuales del empuñador. Devuelve 0 si no hay empuñador o
