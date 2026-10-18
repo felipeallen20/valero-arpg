@@ -29,11 +29,9 @@ transform = Transform3D(0.8660254, 0.38302222, -0.32139382, 0, 0.64278764, 0.766
 
 [node name="Enemy" parent="." unique_id=703695394 instance=ExtResource("3_4wyf3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.019, 1.2, -3.34)
-max_health = 75.0
 
 [node name="EnemyRanged" parent="." unique_id=1653472088 instance=ExtResource("5_rnge3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1.2, -4)
-max_health = 75.0
 
 [node name="HUD" parent="." unique_id=1768720518 instance=ExtResource("4_k0juu")]
 
