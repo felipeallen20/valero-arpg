@@ -1,7 +1,11 @@
 class_name RangedWeapon
 extends Weapon
 
-## Arma a distancia. No tiene modelo ni textura: es la referencia del arma
+## Categoría "a distancia": el comportamiento compartido por TODAS las armas
+## de rango. No es un arma concreta: cada arma (p. ej. la ballesta de un enemigo)
+## hereda de esta y define su propio proyectil y efectos.
+##
+## No tiene modelo ni textura: es la referencia del arma
 ## (daño, cadencia y alcance viven aquí, en Weapon). Sus proyectiles sí son
 ## visibles: cada disparo instancia projectile_scene en el Muzzle, orientado
 ## hacia donde apunte el arma (su -Z).

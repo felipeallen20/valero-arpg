@@ -1,6 +1,16 @@
 class_name MeleeWeapon
 extends Weapon
 
+## Categoría "cuerpo a cuerpo": el comportamiento compartido por TODAS las
+## armas melee. No es un arma concreta: cada arma (PracticeSword, y en el
+## futuro una katana, un hacha...) hereda de esta y define sus propios
+## valores y efectos en su script de arma concreta.
+##
+## Aporta la hitbox ligada a la animación de ataque: la animación abre y cierra
+## la ventana de golpe (enable_hit / disable_hit) y el daño real lo resuelve
+## Weapon.deal_damage, que además dispara _on_hit_landed para que las armas
+## concretas apliquen sus efectos (sangrado, etc.).
+
 @onready var _anim: AnimationPlayer = $AnimationPlayer
 @onready var _hitbox: Area3D = $Pivot/Hitbox
 

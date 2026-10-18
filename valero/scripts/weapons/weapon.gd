@@ -4,6 +4,11 @@ extends Node3D
 ## Arma base. Define QUÉ es el combo de esta arma (su patrón y su efecto),
 ## pero no guarda el estado del combo: ese pertenece al empuñador (el Player).
 ## Así cada arma puede llevar su propio combo sin mezclar estados.
+##
+## Jerarquía: Weapon (base) → MeleeWeapon / RangedWeapon (categorías de
+## comportamiento) → arma concreta (p. ej. PracticeSword). Las armas concretas
+## sobrescriben get_damage_for_combo() o _on_hit_landed() para definir sus
+## efectos específicos (sangrado, quemadura, etc.).
 
 signal attacked
 
@@ -64,7 +69,7 @@ func is_combo_active_for(combo_count: int) -> bool:
 
 
 ## Efecto del combo sobre el daño de un golpe. Es el punto de extensión:
-## cada arma puede sobrescribirlo para aplicar su propio efecto
+## el arma concreta puede sobrescribirlo para aplicar su propio efecto
 ## (quemadura, empujón, curación, etc.).
 func get_damage_for_combo(combo_count: int) -> float:
 	if is_combo_active_for(combo_count):
@@ -87,11 +92,19 @@ func deal_damage(target: Node) -> void:
 	if target.has_method("take_damage"):
 		var damage_dealt := get_current_damage()
 		target.take_damage(damage_dealt)
+		_on_hit_landed(target, damage_dealt)
 		_register_combo_hit()
 		# El empuñador puede usar ese daño para algo más (curación por
 		# contragolpe, etc.). Solo lo procesa quien exponga el método.
 		if wielder != null and wielder.has_method("register_damage_dealt"):
 			wielder.register_damage_dealt(damage_dealt)
+
+
+## Punto de extensión para efectos al impactar (sangrado, quemadura, etc.).
+## Se llama UNA vez por golpe conectado, justo después de aplicar el daño.
+## Las armas concretas lo sobrescriben; aquí no hace nada.
+func _on_hit_landed(_target: Node, _damage_dealt: float) -> void:
+	pass
 
 
 ## Informa al empuñador de que el swing conectó, para que sume a su combo.

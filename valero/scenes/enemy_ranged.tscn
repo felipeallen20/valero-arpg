@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/enemies/enemy_ranged.gd" id="1_rnge1"]
 [ext_resource type="Script" uid="uid://5fl5kcfj1p7c" path="res://scripts/enemies/UI/health_bar_3d.gd" id="2_rnge2"]
-[ext_resource type="Script" uid="uid://v4gyscg8xplo" path="res://scripts/weapons/ranged_weapon.gd" id="3_rnge3"]
+[ext_resource type="Script" path="res://scripts/weapons/practice_gun.gd" id="3_rnge3"]
 [ext_resource type="PackedScene" path="res://scenes/weapons/projectile.tscn" id="4_rnge4"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_rnge"]
