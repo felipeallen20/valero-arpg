@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://deki3bc2w0c0r"
-path.s3tc="res://.godot/imported/base.png-02d425354d204944b7c4d25da4fe6c08.s3tc.ctex"
+uid="uid://dvgn2mmpf3bd7"
+path.s3tc="res://.godot/imported/hoja.png-cf5e47275f00a0686cc95e186eee14ee.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/models/weapons/swords/weapons/swords/practice_sword/base.png"
-dest_files=["res://.godot/imported/base.png-02d425354d204944b7c4d25da4fe6c08.s3tc.ctex"]
+source_file="res://assets/models/weapons/swords/practice_sword/hoja.png"
+dest_files=["res://.godot/imported/hoja.png-cf5e47275f00a0686cc95e186eee14ee.s3tc.ctex"]
 
 [params]
 

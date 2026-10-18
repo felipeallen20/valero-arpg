@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dvgn2mmpf3bd7"
-path.s3tc="res://.godot/imported/hoja.png-24b6ffd30b4f59c5293dd1642d468472.s3tc.ctex"
+uid="uid://du4nq6fnx6vxg"
+path.s3tc="res://.godot/imported/mango.png-011ba27f1e189dd42ce837cd3ea37c56.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/models/weapons/swords/weapons/swords/practice_sword/hoja.png"
-dest_files=["res://.godot/imported/hoja.png-24b6ffd30b4f59c5293dd1642d468472.s3tc.ctex"]
+source_file="res://assets/models/weapons/swords/practice_sword/mango.png"
+dest_files=["res://.godot/imported/mango.png-011ba27f1e189dd42ce837cd3ea37c56.s3tc.ctex"]
 
 [params]
 

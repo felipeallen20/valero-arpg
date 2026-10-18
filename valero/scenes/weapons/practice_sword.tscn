@@ -1,10 +1,10 @@
 [gd_scene format=3 uid="uid://c5sjv3oxst7b3"]
 
 [ext_resource type="Script" uid="uid://c43kf026ysauq" path="res://scripts/weapons/melee_weapon.gd" id="1_hvg78"]
-[ext_resource type="ArrayMesh" uid="uid://d00dvlivnxlyv" path="res://assets/models/weapons/swords/weapons/swords/practice_sword/practice_sword.obj" id="2_o4rta"]
-[ext_resource type="Texture2D" uid="uid://du4nq6fnx6vxg" path="res://assets/models/weapons/swords/weapons/swords/practice_sword/mango.png" id="3_ekm0b"]
-[ext_resource type="Texture2D" uid="uid://deki3bc2w0c0r" path="res://assets/models/weapons/swords/weapons/swords/practice_sword/base.png" id="4_auo53"]
-[ext_resource type="Texture2D" uid="uid://dvgn2mmpf3bd7" path="res://assets/models/weapons/swords/weapons/swords/practice_sword/hoja.png" id="5_rt4hf"]
+[ext_resource type="ArrayMesh" uid="uid://d00dvlivnxlyv" path="res://assets/models/weapons/swords/practice_sword/practice_sword.obj" id="2_o4rta"]
+[ext_resource type="Texture2D" uid="uid://du4nq6fnx6vxg" path="res://assets/models/weapons/swords/practice_sword/mango.png" id="3_ekm0b"]
+[ext_resource type="Texture2D" uid="uid://deki3bc2w0c0r" path="res://assets/models/weapons/swords/practice_sword/base.png" id="4_auo53"]
+[ext_resource type="Texture2D" uid="uid://dvgn2mmpf3bd7" path="res://assets/models/weapons/swords/practice_sword/hoja.png" id="5_rt4hf"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_jxsi6"]
 size = Vector3(1, 1.0302734, 1)
