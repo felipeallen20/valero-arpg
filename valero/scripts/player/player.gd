@@ -43,6 +43,12 @@ const DODGE_IFRAMES := 0.22
 
 const DODGE_STAMINA_COST := 25.0
 
+# --- Feedback de combo ---
+const COMBO_OUTLINE_COLOR := Color(1.0, 0.85, 0.1)  # Amarillo del combo.
+const COMBO_OUTLINE_THICKNESS := 0.06               # Grosor del contorno (m).
+const COMBO_FADE_TIME := 0.15                       # Fundido de entrada/salida.
+const COMBO_PULSE_TIME := 0.5                       # Duración de cada pulso.
+
 @onready var stats: PlayerStats = $PlayerStats
 
 var _is_dodging := false
@@ -56,6 +62,13 @@ var _air_dash_available := true
 # --- Referencias ---
 @onready var _camera_pivot: Node3D = $ThirdPerson
 @onready var _weapon: Weapon = $PracticeSword
+@onready var _model: MeshInstance3D = $Model
+
+# --- Feedback de combo ---
+var _combo_outline: MeshInstance3D
+var _combo_outline_material: StandardMaterial3D
+var _combo_fade_tween: Tween
+var _combo_pulse_tween: Tween
 
 # --- Estado ---
 # Se toma la gravedad del proyecto en lugar de fijar una propia, para respetar
@@ -71,6 +84,68 @@ func _ready() -> void:
 	floor_snap_length = 0.3
 	_weapon.wielder = self
 	stats.died.connect(_on_died)
+
+	_setup_combo_outline()
+	_weapon.combo_changed.connect(_on_combo_changed)
+
+
+# --- Feedback de combo ---
+# Crea un "inverted hull": una copia de la malla del modelo, agrandada por sus
+# normales y con las caras traseras visibles. Eso dibuja un contorno alrededor
+# del cuerpo sin tocar el material original.
+# Nota: en Godot 4.7 grow/grow_amount viven en el material (BaseMaterial3D),
+# no en el nodo GeometryInstance3D como en versiones anteriores.
+func _setup_combo_outline() -> void:
+	_combo_outline_material = StandardMaterial3D.new()
+	_combo_outline_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_combo_outline_material.albedo_color = Color(COMBO_OUTLINE_COLOR, 0.0)
+	_combo_outline_material.cull_mode = BaseMaterial3D.CULL_FRONT
+	_combo_outline_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_combo_outline_material.no_depth_test = false
+	_combo_outline_material.grow = true
+	_combo_outline_material.grow_amount = COMBO_OUTLINE_THICKNESS
+
+	_combo_outline = MeshInstance3D.new()
+	_combo_outline.mesh = _model.mesh
+	_combo_outline.material_override = _combo_outline_material
+	_combo_outline.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_combo_outline.visible = false
+	# Como hijo del modelo, hereda sus giros y desplazamientos.
+	_model.add_child(_combo_outline)
+
+
+func _on_combo_changed(_count: int, active: bool) -> void:
+	_set_combo_outline(active)
+
+
+func _set_combo_outline(active: bool) -> void:
+	# Se mata cualquier tween previo para poder alternar el combo rápido.
+	if _combo_fade_tween:
+		_combo_fade_tween.kill()
+	if _combo_pulse_tween:
+		_combo_pulse_tween.kill()
+
+	if active:
+		_combo_outline.visible = true
+
+	# Fundido de entrada o de salida.
+	_combo_fade_tween = create_tween()
+	_combo_fade_tween.tween_property(
+		_combo_outline_material, "albedo_color:a", 1.0 if active else 0.0, COMBO_FADE_TIME
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+	if active:
+		# "Respiración" continua del contorno mientras dura el combo.
+		_combo_pulse_tween = create_tween()
+		_combo_pulse_tween.tween_property(
+			_combo_outline_material, "albedo_color:a", 0.55, COMBO_PULSE_TIME
+		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		_combo_pulse_tween.tween_property(
+			_combo_outline_material, "albedo_color:a", 1.0, COMBO_PULSE_TIME
+		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		_combo_pulse_tween.set_loops()
+	else:
+		_combo_fade_tween.tween_callback(_hide_combo_outline)
 
 
 func _physics_process(delta: float) -> void:
@@ -262,3 +337,7 @@ func _update_sprint(direction: Vector3, delta: float) -> void:
 
 func _on_died() -> void:
 	set_physics_process(false)
+
+
+func _hide_combo_outline() -> void:
+	_combo_outline.visible = false

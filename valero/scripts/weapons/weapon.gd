@@ -17,8 +17,9 @@ signal combo_changed(count: int, active: bool)
 @export var combo_size := 3
 ## Daño extra multiplicativo mientras el combo está activo (0.25 = +25%).
 @export var combo_bonus := 0.25
-## Segundos entre golpes que se toleran antes de perder el combo.
-@export var combo_window := 1.2
+## Segundos de gracia que se toleran tras el último golpe antes de perder el
+## combo. Si el jugador para de atacar, el combo sigue vivo este tiempo.
+@export var combo_window := 5.0
 
 ## Quién empuña el arma (el Player). Así el arma no se daña a sí misma.
 var wielder: Node3D

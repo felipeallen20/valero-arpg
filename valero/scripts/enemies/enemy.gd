@@ -179,6 +179,9 @@ func take_damage(amount: float) -> void:
 		return
 	health = maxf(health - amount, 0.0)
 	_health_bar.set_ratio(health / max_health)
+	# Número de daño flotante. Se añade a la escena actual (no al enemigo)
+	# para que el golpe letal siga mostrándose aunque el enemigo muera.
+	DamageNumber.spawn(get_tree().current_scene, global_position, amount)
 	if health <= 0.0:
 		_die()
 
