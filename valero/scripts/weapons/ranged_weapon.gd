@@ -2,8 +2,8 @@ class_name RangedWeapon
 extends Weapon
 
 ## Categoría "a distancia": el comportamiento compartido por TODAS las armas
-## de rango. No es un arma concreta: cada arma (p. ej. la ballesta de un enemigo)
-## hereda de esta y define su propio proyectil y efectos.
+## de rango. No es un arma concreta: cada arma (p. ej. PracticeGun, el arma del
+## enemigo a distancia) hereda de esta y define su propio proyectil y efectos.
 ##
 ## No tiene modelo ni textura: es la referencia del arma
 ## (daño, cadencia y alcance viven aquí, en Weapon). Sus proyectiles sí son

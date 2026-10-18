@@ -39,7 +39,8 @@ scripts/
 | `weapon.gd` | **Clase base** de armas (`class_name Weapon`): define daño, cadencia, alcance y el **contrato de combo** (patrón y efecto) que comparten todas las armas. No guarda estado de combo (vive en el empuñador). Expone los puntos de extensión `get_damage_for_combo()` (efecto del combo sobre el daño) y `_on_hit_landed()` (efectos al impactar, p. ej. sangrado). |
 | `melee_weapon.gd` | **Categoría melee** (`extends Weapon`): comportamiento compartido por todas las armas cuerpo a cuerpo. Reproduce la animación de ataque y activa/desactiva una hitbox según sus frames (Call Method Track), evitando dañar dos veces al mismo objetivo en un swing. No es un arma concreta. |
 | `ranged_weapon.gd` | **Categoría a distancia** (`extends Weapon`): comportamiento compartido por todas las armas de rango. Sin modelo propio; cada disparo instancia la escena del proyectil en el Muzzle orientado hacia donde apunte el arma. No es un arma concreta. |
-| `practice_sword.gd` | **Arma concreta** (`extends MeleeWeapon`): la espada de práctica. No sobrescribe nada: usa el combo básico de `Weapon` (sube el daño). Sirve de plantilla de cómo se crea un arma concreta. |
+| `practice_sword.gd` | **Arma concreta** (`extends MeleeWeapon`): la espada de práctica. No sobrescribe nada: usa el combo básico de `Weapon` (sube el daño). Sirve de plantilla de cómo se crea un arma concreta melee. |
+| `practice_gun.gd` | **Arma concreta** (`extends RangedWeapon`): la pistola de práctica, usada por el enemigo a distancia. No sobrescribe nada; hereda el disparo de proyectiles de `RangedWeapon`. Referencia de arma concreta para la categoría a distancia. |
 | `projectile.gd` | Proyectil visible (`Area3D`): vuela en línea recta desde el Muzzle hasta impactar o agotar el rango. Al impactar delega el daño en el arma (`Weapon.deal_damage`), por lo que un proyectil también cuenta para el combo y dispara los efectos de `_on_hit_landed()`. |
 
 ### Jerarquía de armas
@@ -49,6 +50,7 @@ Weapon (weapon.gd)                 → base: daño, cadencia, alcance y combo
 ├── MeleeWeapon  (melee_weapon.gd) → categoría: hitbox + animación
 │   └── PracticeSword (practice_sword.gd) → arma concreta
 └── RangedWeapon (ranged_weapon.gd) → categoría: dispara proyectiles
+    └── PracticeGun (practice_gun.gd) → arma concreta (enemigo a distancia)
 ```
 
 Para crear un arma nueva: heredar de `MeleeWeapon` o `RangedWeapon` (nunca de `Weapon` directamente), sobrescribir `get_damage_for_combo()` y/o `_on_hit_landed()` si tiene efectos propios, y adjuntar ese script a la escena del arma.
