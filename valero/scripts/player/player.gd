@@ -20,6 +20,13 @@ const GRAVITY_SCALE_RISE := 1.0     # Gravedad mientras se sube (ligera).
 const GRAVITY_SCALE_FALL := 1.8     # Gravedad mientras se cae (pesada = aterrizaje rápido).
 const MAX_FALL_SPEED := 30.0        # Velocidad de caída máxima (m/s).
 
+# --- Sprint ---
+const SPRINT_SPEED := 12.0                   # Velocidad máxima al correr (m/s).
+const SPRINT_STAMINA_COST := 12.0            # Estamina por segundo (con 100 de máx. ≈ 8 s de sprint).
+const SPRINT_MIN_STAMINA_TO_START := 15.0    # Mínimo para (re)empezar a correr.
+
+var _is_sprinting := false
+
 # Asistencia al salto para que no se pierda ninguna pulsación:
 #   - Coyote time: aún se puede saltar un instante después de dejar el borde.
 #   - Jump buffer: pulsar un poco antes de tocar el suelo guarda el salto.
@@ -79,6 +86,7 @@ func _physics_process(delta: float) -> void:
 		_try_attack()
 
 		var direction := _input_direction()
+		_update_sprint(direction, delta)
 		_apply_horizontal_movement(direction, delta)
 		_turn_body(direction, delta)
 
@@ -140,7 +148,8 @@ func _apply_horizontal_movement(direction: Vector3, delta: float) -> void:
 		horizontal = horizontal.move_toward(Vector3.ZERO, decel * delta)
 	else:
 		var accel := ACCELERATION if is_on_floor() else AIR_ACCELERATION
-		horizontal = horizontal.move_toward(direction * SPEED, accel * delta)
+		var max_speed := SPRINT_SPEED if _is_sprinting else SPEED
+		horizontal = horizontal.move_toward(direction * max_speed, accel * delta)
 	velocity.x = horizontal.x
 	velocity.z = horizontal.z
 
@@ -233,6 +242,23 @@ func _update_dodge_timers(delta: float) -> void:
 		_iframe_time_left -= delta
 		if _iframe_time_left <= 0.0:
 			_is_invulnerable = false
+
+# --- Sprint ---
+# Solo gasta estamina en el suelo. En el aire se conserva el estado que traías
+# al saltar, así un salto corriendo mantiene el impulso sin drenar estamina.
+func _update_sprint(direction: Vector3, delta: float) -> void:
+	if not is_on_floor():
+		return
+
+	var wants_sprint := Input.is_action_pressed("sprint") and direction != Vector3.ZERO
+	# Para empezar hace falta un mínimo; una vez corriendo, se sigue hasta agotar.
+	var has_enough := stats.stamina > 0.0 if _is_sprinting else stats.has_stamina(SPRINT_MIN_STAMINA_TO_START)
+
+	if wants_sprint and has_enough:
+		# drain_stamina también pausa la regeneración mientras corres.
+		_is_sprinting = stats.drain_stamina(SPRINT_STAMINA_COST * delta)
+	else:
+		_is_sprinting = false
 
 func _on_died() -> void:
 	set_physics_process(false)
