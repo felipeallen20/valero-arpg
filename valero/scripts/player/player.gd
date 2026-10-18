@@ -49,6 +49,15 @@ const COMBO_OUTLINE_THICKNESS := 0.06               # Grosor del contorno (m).
 const COMBO_FADE_TIME := 0.15                       # Fundido de entrada/salida.
 const COMBO_PULSE_TIME := 0.5                       # Duración de cada pulso.
 
+# --- Combo: estado ---
+# El estado del combo vive AQUÍ (en el jugador). La definición de cada combo
+# (cuántos golpes, ventana de gracia y efecto) la pone el arma empuñada, así
+# que cada arma puede tener el suyo sin mezclar estados.
+signal combo_changed(count: int, active: bool)
+
+var combo_count := 0
+var _combo_time_left := 0.0
+
 @onready var stats: PlayerStats = $PlayerStats
 
 var _is_dodging := false
@@ -86,7 +95,8 @@ func _ready() -> void:
 	stats.died.connect(_on_died)
 
 	_setup_combo_outline()
-	_weapon.combo_changed.connect(_on_combo_changed)
+	# El contorno se alimenta de la señal del propio jugador (ya no del arma).
+	combo_changed.connect(_on_combo_changed)
 
 
 # --- Feedback de combo ---
@@ -151,6 +161,7 @@ func _set_combo_outline(active: bool) -> void:
 func _physics_process(delta: float) -> void:
 	_update_dodge_timers(delta)
 	_update_jump_assist(delta)
+	_update_combo_timer(delta)
 	_apply_gravity(delta)
 	_try_jump()
 	_try_dodge()
@@ -245,12 +256,14 @@ func _turn_body(direction: Vector3, delta: float) -> void:
 	rotation.y = lerp_angle(rotation.y, target_angle, 1.0 - exp(-TURN_SPEED * delta))
 
 # --- Ataque ---
-# Mantener el clic encadena ataques; el cooldown del arma marca el ritmo.
+# Mantener el clic encadena ataques; el cooldown del marca el ritmo.
 func _try_attack() -> void:
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		return  # con el mouse liberado (Esc) el clic no debe atacar
 	if Input.is_action_pressed("attack"):
-		_weapon.attack()
+		# Solo avanza el combo si el arma aceptó el ataque (cooldown listo).
+		if _weapon.attack():
+			_advance_combo()
 		
 # --- Dash ---
 func _try_dodge() -> void:
@@ -337,6 +350,60 @@ func _update_sprint(direction: Vector3, delta: float) -> void:
 
 func _on_died() -> void:
 	set_physics_process(false)
+
+
+# --- Combo: estado ---
+# El jugador guarda el estado; el arma empuñada define qué significa ese
+# estado (su patrón y su efecto). Así, cambiar de arma cambia el combo sin
+# tocar este código.
+
+## Golpes de combo acumulados. Lo consulta el arma (ver Weapon).
+func get_combo_count() -> int:
+	return combo_count
+
+
+## true si el arma actual considera activo el combo actual.
+func is_combo_active() -> bool:
+	return _weapon != null and _weapon.is_combo_active_for(combo_count)
+
+
+## Registra un golpe del arma actual: suma al combo y reinicia la ventana de
+## gracia definida por el arma.
+func _advance_combo() -> void:
+	combo_count += 1
+	_combo_time_left = _weapon.combo_window
+	combo_changed.emit(combo_count, is_combo_active())
+
+
+## Reinicia el combo (ventana agotada, muerte, cambio de arma...).
+func _reset_combo() -> void:
+	if combo_count == 0:
+		return
+	combo_count = 0
+	_combo_time_left = 0.0
+	combo_changed.emit(0, false)
+
+
+## Cuenta hacia atrás la ventana de gracia del arma.
+func _update_combo_timer(delta: float) -> void:
+	if _combo_time_left <= 0.0:
+		return
+	_combo_time_left -= delta
+	if _combo_time_left <= 0.0:
+		_reset_combo()
+
+
+## Cambia el arma activa. El combo se reinicia porque la definición del combo
+## (patrón, ventana, efecto) depende del arma, y la nueva puede ser distinta.
+func set_weapon(new_weapon: Weapon) -> void:
+	if new_weapon == _weapon:
+		return
+	_reset_combo()
+	if _weapon != null:
+		_weapon.wielder = null
+	_weapon = new_weapon
+	if _weapon != null:
+		_weapon.wielder = self
 
 
 func _hide_combo_outline() -> void:

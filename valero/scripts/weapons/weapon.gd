@@ -1,9 +1,11 @@
 class_name Weapon
 extends Node3D
 
+## Arma base. Define QUÉ es el combo de esta arma (su patrón y su efecto),
+## pero no guarda el estado del combo: ese pertenece al empuñador (el Player).
+## Así cada arma puede llevar su propio combo sin mezclar estados.
+
 signal attacked
-## Se emite al cambiar el estado del combo (para la UI, sonidos, etc.).
-signal combo_changed(count: int, active: bool)
 
 @export var weapon_name := "Arma"
 @export var damage := 10.0
@@ -13,28 +15,18 @@ signal combo_changed(count: int, active: bool)
 @export var attack_range := 2.0
 
 @export_group("Combo")
-## Golpes seguidos necesarios para activar el combo.
+## Golpes seguidos del empuñador que activan el combo de ESTE arma.
 @export var combo_size := 3
-## Daño extra multiplicativo mientras el combo está activo (0.25 = +25%).
+## Efecto del combo activo sobre el daño (0.25 = +25%).
 @export var combo_bonus := 0.25
-## Segundos de gracia que se toleran tras el último golpe antes de perder el
-## combo. Si el jugador para de atacar, el combo sigue vivo este tiempo.
+## Segundos de gracia tras el último golpe antes de perder el combo.
 @export var combo_window := 5.0
 
-## Quién empuña el arma (el Player). Así el arma no se daña a sí misma.
+## Quién empuña el arma (el Player). Así el arma no se daña a sí misma
+## y puede leer el estado de combo del empuñador.
 var wielder: Node3D
 
 var _next_attack_time_ms := 0
-var _combo_count := 0
-var _combo_time_left := 0.0
-
-
-func _process(delta: float) -> void:
-	if _combo_time_left <= 0.0:
-		return
-	_combo_time_left -= delta
-	if _combo_time_left <= 0.0:
-		_reset_combo()
 
 
 func can_attack() -> bool:
@@ -42,11 +34,11 @@ func can_attack() -> bool:
 
 
 ## Intenta atacar. Devuelve true si el ataque se ejecutó.
+## El avance del combo lo registra el empuñador al recibir un true.
 func attack() -> bool:
 	if not can_attack():
 		return false
 	_next_attack_time_ms = Time.get_ticks_msec() + int(1000.0 / maxf(attack_speed, 0.01))
-	_advance_combo()
 	_perform_attack()
 	attacked.emit()
 	return true
@@ -57,11 +49,27 @@ func _perform_attack() -> void:
 	pass
 
 
-## Daño del próximo golpe, aplicando el bonus de combo si está activo.
-func get_current_damage() -> float:
-	if is_combo_active():
+# --- Combo: solo definición del arma ---
+# El estado (golpes seguidos, ventana de gracia) vive en el empuñador.
+# Aquí se define el patrón y el efecto que ese estado produce.
+
+## true si la cantidad de golpes indicada activa el combo de esta arma.
+func is_combo_active_for(combo_count: int) -> bool:
+	return combo_count >= combo_size
+
+
+## Efecto del combo sobre el daño de un golpe. Es el punto de extensión:
+## cada arma puede sobrescribirlo para aplicar su propio efecto
+## (quemadura, empujón, curación, etc.).
+func get_damage_for_combo(combo_count: int) -> float:
+	if is_combo_active_for(combo_count):
 		return damage * (1.0 + combo_bonus)
 	return damage
+
+
+## Daño del próximo golpe, leyendo el estado de combo del empuñador.
+func get_current_damage() -> float:
+	return get_damage_for_combo(get_wielder_combo_count())
 
 
 ## Aplica el daño del arma a un objetivo, si sabe recibirlo.
@@ -72,23 +80,9 @@ func _deal_damage(target: Node) -> void:
 		target.take_damage(get_current_damage())
 
 
-# --- Combo ---
-## true si ya se encadenaron combo_size golpes dentro de la ventana.
-func is_combo_active() -> bool:
-	return _combo_count >= combo_size
-
-
-## Cuenta un golpe nuevo y reinicia la ventana. Se cuenta el intento (swing),
-## no el acierto: fallar no castiga, pero pararse sí rompe el combo.
-func _advance_combo() -> void:
-	_combo_count += 1
-	_combo_time_left = combo_window
-	combo_changed.emit(_combo_count, is_combo_active())
-
-
-func _reset_combo() -> void:
-	if _combo_count == 0:
-		return
-	_combo_count = 0
-	_combo_time_left = 0.0
-	combo_changed.emit(0, false)
+## Golpes de combo actuales del empuñador. Devuelve 0 si no hay empuñador o
+## si no expone el estado (por ejemplo, un arma usada fuera de un personaje).
+func get_wielder_combo_count() -> int:
+	if wielder != null and wielder.has_method("get_combo_count"):
+		return wielder.get_combo_count()
+	return 0
