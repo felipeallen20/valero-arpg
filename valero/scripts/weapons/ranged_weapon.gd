@@ -14,4 +14,4 @@ func _perform_attack() -> void:
 	get_tree().current_scene.add_child(projectile)
 	projectile.global_transform = _muzzle.global_transform
 	if projectile.has_method("launch"):
-		projectile.launch(damage, projectile_speed, attack_range, wielder)
+		projectile.launch(get_current_damage(), projectile_speed, attack_range, wielder)
