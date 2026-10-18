@@ -73,9 +73,8 @@ _data = {
 }
 
 [node name="PracticeSword" type="Node3D" unique_id=938474064]
-transform = Transform3D(1.75, 0, 0, 0, 1.75, 0, 0, 0, 1.75, 0, -0.16624108, 0)
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, -0.16624108, 0)
 script = ExtResource("1_hvg78")
-damage = 10.0
 attack_speed = 1.5
 
 [node name="Pivot" type="Node3D" parent="." unique_id=1928715599]
@@ -86,7 +85,7 @@ collision_layer = 0
 collision_mask = 4
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Pivot/Hitbox" unique_id=1771601606]
-transform = Transform3D(0.125, 0, 0, 0, 0.5500001, 0, 0, 0, 0.05, 0.007122705, 0.670315, 0.020778982)
+transform = Transform3D(0.125, 0, 0, 0, 0.5500001, 0, 0, 0, 0.05, 0.007122705, 0.67695725, 0.020778982)
 shape = SubResource("BoxShape3D_jxsi6")
 
 [node name="Mesh" type="MeshInstance3D" parent="Pivot" unique_id=1804440856]
