@@ -97,6 +97,7 @@ func _ready() -> void:
 	_setup_combo_outline()
 	# El contorno se alimenta de la señal del propio jugador (ya no del arma).
 	combo_changed.connect(_on_combo_changed)
+	stats.healed.connect(_on_healed)
 
 
 # --- Feedback de combo ---
@@ -348,8 +349,54 @@ func _update_sprint(direction: Vector3, delta: float) -> void:
 	else:
 		_is_sprinting = false
 
+# --- Daño recibido ---
+## Daño que llega al jugador (proyectiles, trampas, enemigos...). Delega en
+## PlayerStats, que respeta las invulnerabilidades del esquive, así que un
+## proyectil se esquiva igual que un golpe melee.
+func take_damage(amount: float) -> void:
+	stats.take_damage(amount)
+
+
 func _on_died() -> void:
 	set_physics_process(false)
+
+
+# --- Feedback de curación ---
+# Número flotante verde sobre el jugador cuando la curación es suficientemente
+# grande para merecerse atención (los goteos casi invisibles se omiten).
+const HEAL_NUMBER_COLOR := Color(0.3, 0.92, 0.42)
+const HEAL_NUMBER_MIN := 3.0
+
+
+func _on_healed(amount: float) -> void:
+	if amount < HEAL_NUMBER_MIN:
+		return
+	DamageNumber.spawn(get_tree().current_scene, global_position, amount, HEAL_NUMBER_COLOR)
+
+
+# --- Curación por contragolpe ---
+## Lo llama el arma cuando su golpe conecta (mismo patrón que
+## register_combo_hit). Durante la ventana de recuperación de PlayerStats,
+## ese daño infligido se convierte en vida.
+func register_damage_dealt(amount: float) -> void:
+	stats.register_damage_dealt(amount)
+
+
+# --- Depuración (solo builds de debug) ---
+# F1: daño de un golpe fuerte para disparar la ventana de recuperación.
+# F2: curación completa para comprobar el feedback.
+const DEBUG_DAMAGE := 40.0
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not OS.is_debug_build():
+		return
+	if event is InputEventKey and event.pressed and not event.echo:
+		match event.keycode:
+			KEY_F1:
+				stats.take_damage(DEBUG_DAMAGE)
+			KEY_F2:
+				stats.heal(stats.max_health)
 
 
 # --- Combo: estado ---

@@ -38,7 +38,7 @@ func can_attack() -> bool:
 
 ## Intenta atacar. Devuelve true si el ataque se ejecutó.
 ## El combo NO avanza aquí: solo lo hace si el golpe conecta con un objetivo
-## (ver _deal_damage). Así fallar el swing no suma combo.
+## (ver deal_damage). Así fallar el swing no suma combo.
 func attack() -> bool:
 	if not can_attack():
 		return false
@@ -79,13 +79,19 @@ func get_current_damage() -> float:
 
 ## Aplica el daño del arma a un objetivo, si sabe recibirlo.
 ## Este es el punto donde el golpe se considera "conectado": solo entonces
-## (y una única vez por swing) avanza el combo del empuñador.
-func _deal_damage(target: Node) -> void:
+## (y una única vez por swing) avanza el combo del empuñador. Lo llaman tanto
+## la hitbox melee como el proyectil al impactar.
+func deal_damage(target: Node) -> void:
 	if target == wielder:
 		return
 	if target.has_method("take_damage"):
-		target.take_damage(get_current_damage())
+		var damage_dealt := get_current_damage()
+		target.take_damage(damage_dealt)
 		_register_combo_hit()
+		# El empuñador puede usar ese daño para algo más (curación por
+		# contragolpe, etc.). Solo lo procesa quien exponga el método.
+		if wielder != null and wielder.has_method("register_damage_dealt"):
+			wielder.register_damage_dealt(damage_dealt)
 
 
 ## Informa al empuñador de que el swing conectó, para que sume a su combo.

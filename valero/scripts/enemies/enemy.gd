@@ -2,19 +2,15 @@ class_name Enemy
 extends EnemyBase
 
 ## Enemigo cuerpo a cuerpo: persigue al jugador y golpea a corta distancia.
-## La vida, el daño recibido y la muerte viven en EnemyBase.
+## La vida, el daño recibido y la localización/orientación del jugador
+## viven en EnemyBase.
 
 enum State { CHASE, ATTACK, DEAD }
-
-# --- Referencia al jugador ---
-## Si está vacío, se busca automáticamente en el grupo "player" al arrancar.
-@export var player_path: NodePath
 
 # --- Persecución ---
 @export_group("Persecución")
 @export var move_speed := 3.0          # Velocidad máxima al perseguir (m/s).
 @export var acceleration := 18.0       # Aceleración hacia move_speed (m/s²).
-@export var turn_speed := 10.0         # Rapidez con la que encara al jugador.
 @export var stop_distance := 1.6       # Distancia a la que deja de acercarse.
 
 # --- Ataque ---
@@ -25,30 +21,8 @@ enum State { CHASE, ATTACK, DEAD }
 @export var attack_cooldown := 1.20    # Segundos entre golpes.
 
 var _state: State = State.CHASE
-var _player: Node3D
-var _player_stats: PlayerStats
 var _windup_left := 0.0
 var _cooldown_left := 0.0
-
-
-func _ready() -> void:
-	super._ready()
-	_resolve_player()
-
-
-## Localiza al jugador: por ruta explícita o, si no, por el grupo "player".
-func _resolve_player() -> void:
-	if player_path != NodePath(""):
-		_player = get_node_or_null(player_path) as Node3D
-	if _player == null:
-		_player = get_tree().get_first_node_in_group("player") as Node3D
-
-	if _player == null:
-		push_warning("Enemy: no se encontró ningún jugador (grupo 'player').")
-		set_physics_process(false)
-		return
-
-	_player_stats = _player.get_node_or_null("PlayerStats") as PlayerStats
 
 
 func _physics_process(delta: float) -> void:
@@ -59,7 +33,7 @@ func _physics_process(delta: float) -> void:
 	_update_timers(delta)
 
 	# Sin jugador vivo no hay a qué perseguir.
-	if _player == null or (_player_stats != null and _player_stats.is_dead()):
+	if not _has_live_player():
 		velocity.x = 0.0
 		velocity.z = 0.0
 		move_and_slide()
@@ -130,29 +104,9 @@ func _deal_attack() -> void:
 	_player_stats.take_damage(attack_damage)
 
 
-# --- Utilidades de distancia y orientación ---
-# Distancia horizontal (ignora la altura) al jugador.
-func _flat_distance_to_player() -> float:
-	return Vector2(
-		global_position.x - _player.global_position.x,
-		global_position.z - _player.global_position.z
-	).length()
-
-
-func _direction_to_player() -> Vector3:
-	var dir := _player.global_position - global_position
-	dir.y = 0.0
-	return dir.normalized() if dir.length_squared() > 0.0001 else Vector3.ZERO
-
-
-# El frente del cuerpo es -Z (convención de Godot), misma fórmula que el Player.
-func _face_player(delta: float) -> void:
-	var direction := _direction_to_player()
-	if direction == Vector3.ZERO:
-		return
-	var target_angle := atan2(-direction.x, -direction.z)
-	rotation.y = lerp_angle(rotation.y, target_angle, 1.0 - exp(-turn_speed * delta))
-
+# Las utilidades de distancia y orientación (_flat_distance_to_player,
+# _direction_to_player y _face_player) viven en EnemyBase, compartidas con
+# el enemigo a distancia.
 
 func _update_timers(delta: float) -> void:
 	_cooldown_left = maxf(_cooldown_left - delta, 0.0)

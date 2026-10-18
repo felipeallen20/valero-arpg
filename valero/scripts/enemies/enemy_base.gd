@@ -1,11 +1,17 @@
 class_name EnemyBase
 extends CharacterBody3D
 
-## Base común de todos los enemigos: vida, gravedad, daño recibido,
-## números de daño flotantes y muerte.
-## La IA (perseguir, ataque a distancia, etc.) va en las clases hijas.
+## Base común de todos los enemigos: vida, gravedad, daño recibido, números
+## de daño flotantes, muerte y localización/orientación hacia el jugador.
+## La IA concreta (perseguir, ataque a distancia...) va en las clases hijas.
 
 signal died
+
+# --- Referencia al jugador ---
+## Si está vacío, se busca automáticamente en el grupo "player" al arrancar.
+@export var player_path: NodePath
+## Rapidez con la que encara al jugador (giro suave).
+@export var turn_speed := 10.0
 
 @export_group("Vida")
 @export var max_health := 75.0
@@ -13,6 +19,8 @@ signal died
 @onready var _health_bar: HealthBar3D = $HealthBar
 
 var health := 0.0
+var _player: Node3D
+var _player_stats: PlayerStats
 var _gravity: float = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
 
 
@@ -21,6 +29,50 @@ func _ready() -> void:
 	_health_bar.set_ratio(1.0, false)
 	# Mantiene al enemigo pegado al suelo en pendientes y escalones pequeños.
 	floor_snap_length = 0.3
+	_resolve_player()
+
+
+## Localiza al jugador: por ruta explícita o, si no, por el grupo "player".
+func _resolve_player() -> void:
+	if player_path != NodePath(""):
+		_player = get_node_or_null(player_path) as Node3D
+	if _player == null:
+		_player = get_tree().get_first_node_in_group("player") as Node3D
+
+	if _player == null:
+		push_warning("Enemy: no se encontró ningún jugador (grupo 'player').")
+		set_physics_process(false)
+		return
+
+	_player_stats = _player.get_node_or_null("PlayerStats") as PlayerStats
+
+
+## true si hay un jugador vivo al que perseguir o apuntar.
+func _has_live_player() -> bool:
+	return _player != null and (_player_stats == null or not _player_stats.is_dead())
+
+
+## Distancia horizontal (ignora la altura) al jugador.
+func _flat_distance_to_player() -> float:
+	return Vector2(
+		global_position.x - _player.global_position.x,
+		global_position.z - _player.global_position.z
+	).length()
+
+
+func _direction_to_player() -> Vector3:
+	var dir := _player.global_position - global_position
+	dir.y = 0.0
+	return dir.normalized() if dir.length_squared() > 0.0001 else Vector3.ZERO
+
+
+# El frente del cuerpo es -Z (convención de Godot), misma fórmula que el Player.
+func _face_player(delta: float) -> void:
+	var direction := _direction_to_player()
+	if direction == Vector3.ZERO:
+		return
+	var target_angle := atan2(-direction.x, -direction.z)
+	rotation.y = lerp_angle(rotation.y, target_angle, 1.0 - exp(-turn_speed * delta))
 
 
 ## Sin IA propia el cuerpo solo aplica gravedad y se queda quieto; las

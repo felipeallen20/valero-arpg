@@ -2,6 +2,8 @@
 
 [ext_resource type="Script" path="res://scripts/enemies/enemy_ranged.gd" id="1_rnge1"]
 [ext_resource type="Script" uid="uid://5fl5kcfj1p7c" path="res://scripts/enemies/UI/health_bar_3d.gd" id="2_rnge2"]
+[ext_resource type="Script" uid="uid://v4gyscg8xplo" path="res://scripts/weapons/ranged_weapon.gd" id="3_rnge3"]
+[ext_resource type="PackedScene" path="res://scenes/weapons/projectile.tscn" id="4_rnge4"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_rnge"]
 
@@ -13,6 +15,7 @@ albedo_color = Color(0.28, 0.68, 0.34, 1)
 [node name="EnemyRanged" type="CharacterBody3D"]
 collision_layer = 4
 script = ExtResource("1_rnge1")
+max_health = 40.0
 
 [node name="Model" type="MeshInstance3D" parent="."]
 mesh = SubResource("CapsuleMesh_rnge")
@@ -24,3 +27,13 @@ shape = SubResource("CapsuleShape3D_rnge")
 [node name="HealthBar" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4517548, 0)
 script = ExtResource("2_rnge2")
+
+[node name="Weapon" type="Node3D" parent="."]
+script = ExtResource("3_rnge3")
+damage = 14.0
+projectile_scene = ExtResource("4_rnge4")
+attack_range = 8.0
+projectile_speed = 15.0
+
+[node name="Muzzle" type="Marker3D" parent="Weapon"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.7)

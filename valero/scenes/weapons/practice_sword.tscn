@@ -75,7 +75,7 @@ _data = {
 [node name="PracticeSword" type="Node3D" unique_id=938474064]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, -0.16624108, 0)
 script = ExtResource("1_hvg78")
-attack_speed = 1.5
+attack_speed = 1.95
 
 [node name="Pivot" type="Node3D" parent="." unique_id=1928715599]
 

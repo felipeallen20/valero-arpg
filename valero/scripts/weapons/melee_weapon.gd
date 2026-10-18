@@ -30,4 +30,4 @@ func _on_hitbox_body_entered(body: Node3D) -> void:
 	if body in _already_hit:
 		return
 	_already_hit.append(body)
-	_deal_damage(body)
+	deal_damage(body)

@@ -13,6 +13,7 @@ albedo_color = Color(0.7397003, 0.262786, 0.33306265, 1)
 [node name="Enemy" type="CharacterBody3D" unique_id=703695394]
 collision_layer = 4
 script = ExtResource("1_7p1mj")
+max_health = 60.0
 
 [node name="Model" type="MeshInstance3D" parent="." unique_id=1474738438]
 mesh = SubResource("CapsuleMesh_nb4d6")
