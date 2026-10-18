@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://4qnwyajakm1s" path="res://scripts/enemies/enemy.gd" id="1_7p1mj"]
 [ext_resource type="Script" uid="uid://5fl5kcfj1p7c" path="res://scripts/enemies/UI/health_bar_3d.gd" id="2_md0e3"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/facing_indicator.tscn" id="3_facin"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_nb4d6"]
 
@@ -18,6 +19,9 @@ max_health = 60.0
 [node name="Model" type="MeshInstance3D" parent="." unique_id=1474738438]
 mesh = SubResource("CapsuleMesh_nb4d6")
 surface_material_override/0 = SubResource("StandardMaterial3D_wwd58")
+
+[node name="FacingIndicator" parent="." instance=ExtResource("3_facin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, -0.43)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1183101584]
 shape = SubResource("CapsuleShape3D_t2dqk")

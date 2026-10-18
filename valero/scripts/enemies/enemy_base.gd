@@ -2,9 +2,10 @@ class_name EnemyBase
 extends CharacterBody3D
 
 ## Base común de los enemigos: vida, gravedad, daño recibido, números
-## de daño flotantes, muerte, localización/orientación hacia el jugador y su
+## de daño flotantes, muerte, localización/orientación hacia el jugador, su
 ## cono de visión (`vision_range` / `vision_angle`), que decide cuándo empiezan
-## a trackearlo. La IA concreta va en las clases hijas.
+## a trackearlo, y el merodeo (patrón de espera) con su indicador de mirada.
+## La IA concreta va en las clases hijas.
 
 signal died
 
@@ -19,6 +20,30 @@ signal died
 @export var vision_range := 12.0
 ## Ángulo total del cono de visión frontal, en grados (110 = ±55°).
 @export var vision_angle := 110.0
+## Distancia de "toque" (m): si el jugador está a esta distancia o menos, se
+## detecta sin mirar ni ángulo. Evita que un enemigo empuje al jugador sin
+## darse cuenta si tropieza con él.
+const VISION_TOUCH_DISTANCE := 1.2
+
+# --- Merodeo (comportamiento mientras no persigue a nadie) ---
+## STAND = quieto en su sitio mirando alrededor; PING_PONG = va y viene entre
+## los puntos; LOOP = los recorre en orden y vuelve al primero.
+enum PatrolPattern { STAND, PING_PONG, LOOP }
+
+@export_group("Merodeo")
+@export var patrol_pattern := PatrolPattern.STAND
+## Puntos del recorrido como desplazamientos respecto a la posición de
+## aparición (el eje Y se ignora: se camina en el plano).
+@export var patrol_points: PackedVector3Array = []
+## Velocidad al merodear (m/s). Suele ser menor que la de persecución.
+@export var patrol_speed := 1.5
+## Pausa en cada punto: se elige un valor al azar entre ambos (segundos).
+@export var patrol_wait_min := 1.0
+@export var patrol_wait_max := 3.0
+## Margen (± grados) de cada mirada alrededor mientras está quieto.
+@export var patrol_look_angle := 70.0
+## Segundos entre una mirada alrededor y la siguiente.
+@export var patrol_look_interval := 1.6
 
 @export_group("Vida")
 @export var max_health := 75.0
@@ -34,12 +59,32 @@ var _gravity: float = float(ProjectSettings.get_setting("physics/3d/default_grav
 # olvida: una vez visto, el enemigo lo trackea aunque después salga del cono.
 var is_tracking := false
 
+# --- Estado del merodeo (solo lo usa la IA en reposo) ---
+# Punto de partida: los patrol_points son desplazamientos respecto a él.
+const PATROL_ARRIVE_DISTANCE := 0.5
+var _patrol_spawn_origin := Vector3.ZERO
+var _patrol_index := 0
+var _patrol_step := 1          # +1/-1: sentido del vaivén en PING_PONG.
+var _patrol_wait_left := 0.0
+var _look_yaw := 0.0           # Rumbo objetivo de la última mirada alrededor.
+var _look_timer := 0.0         # Tiempo hasta la siguiente mirada.
+
+# --- Indicador de mirada (ojo de la cara) ---
+# Su color comunica el estado: calmado o ya detectado.
+const EYE_COLOR_CALM := Color(0.8, 0.95, 1.0)
+const EYE_COLOR_ALERT := Color(1.0, 0.3, 0.25)
+@onready var _eye: MeshInstance3D = get_node_or_null("FacingIndicator/Eye") as MeshInstance3D
+
 
 func _ready() -> void:
 	health = max_health
 	_health_bar.set_ratio(1.0, false)
 	# Mantiene al enemigo pegado al suelo en pendientes y escalones pequeños.
 	floor_snap_length = 0.3
+	_patrol_spawn_origin = global_position
+	_look_yaw = rotation.y
+	_look_timer = randf() * patrol_look_interval
+	_setup_eye()
 	_resolve_player()
 
 
@@ -85,8 +130,8 @@ func can_see_player() -> bool:
 	if _player == null or not _has_live_player():
 		return false
 	var distance := _flat_distance_to_player()
-	# Pegadísimo: da igual el ángulo, está encima y se ve.
-	if distance <= 0.05:
+	# Toque directo: da igual el ángulo o si se está de espaldas, se detecta.
+	if distance <= VISION_TOUCH_DISTANCE:
 		return true
 	if distance > vision_range:
 		return false
@@ -97,16 +142,108 @@ func can_see_player() -> bool:
 ## El enemigo pasa a trackear al jugador. La detección es de por vida: no se
 ## resetea aunque el jugador vuelva a salir del cono de visión.
 func detect_player() -> void:
+	if is_tracking:
+		return
 	is_tracking = true
+	# El ojo se enciende en rojo: se ve de un vistazo que ya te tiene.
+	_set_eye_color(EYE_COLOR_ALERT)
 
 
-# El frente del cuerpo es -Z (convención de Godot), misma fórmula que el Player.
-func _face_player(delta: float) -> void:
-	var direction := _direction_to_player()
+## El frente del cuerpo es -Z (convención de Godot), misma fórmula que el
+## Player. Gira el cuerpo hacia una dirección (plana, sin alturas) con la
+## suavidad de turn_speed. Es la base de _face_player y del merodeo.
+func _face_direction(direction: Vector3, delta: float) -> void:
 	if direction == Vector3.ZERO:
 		return
 	var target_angle := atan2(-direction.x, -direction.z)
 	rotation.y = lerp_angle(rotation.y, target_angle, 1.0 - exp(-turn_speed * delta))
+
+
+func _face_player(delta: float) -> void:
+	_face_direction(_direction_to_player(), delta)
+
+
+# --- Merodeo ---
+# Lo usan las hijas mientras el jugador no esté detectado. Solo escribe
+# velocity X/Z: la gravedad y el desplazamiento los aplica cada hija.
+
+## true si hay un patrón con puntos que recorrer.
+func _has_patrol_route() -> bool:
+	return patrol_pattern != PatrolPattern.STAND and patrol_points.size() >= 2
+
+
+## Mueve el cuerpo por el patrón, o lo deja quieto mirando alrededor si no
+## hay ruta. Al llegar a un punto hace una pausa aleatoria y echa una mirada.
+func _update_patrol(delta: float) -> void:
+	if not _has_patrol_route() or _patrol_wait_left > 0.0:
+		if _patrol_wait_left > 0.0:
+			_patrol_wait_left -= delta
+		velocity.x = 0.0
+		velocity.z = 0.0
+		_idle_look_around(delta)
+		return
+
+	var target := _patrol_spawn_origin + patrol_points[_patrol_index]
+	var to_target := target - global_position
+	to_target.y = 0.0
+	if to_target.length() <= PATROL_ARRIVE_DISTANCE:
+		_next_patrol_point()
+		return
+	var direction := to_target.normalized()
+	velocity.x = direction.x * patrol_speed
+	velocity.z = direction.z * patrol_speed
+	_face_direction(direction, delta)
+
+
+## Elige el punto siguiente según el patrón y prepara la pausa del nuevo punto.
+func _next_patrol_point() -> void:
+	match patrol_pattern:
+		PatrolPattern.PING_PONG:
+			if _patrol_index >= patrol_points.size() - 1:
+				_patrol_step = -1
+			elif _patrol_index <= 0:
+				_patrol_step = 1
+			_patrol_index = clampi(_patrol_index + _patrol_step, 0, patrol_points.size() - 1)
+		PatrolPattern.LOOP:
+			_patrol_index = (_patrol_index + 1) % patrol_points.size()
+	_patrol_wait_left = randf_range(patrol_wait_min, patrol_wait_max)
+	# Fuerza una mirada nueva justo al parar.
+	_look_timer = 0.0
+
+
+## Mirada alrededor: cada cierto tiempo elige un rumbo nuevo (dentro de
+## ±patrol_look_angle del actual) y gira hacia él despacio. Es lo que rompe la
+## sensación de que el enemigo es un cápsula clavada mirando al vacío.
+func _idle_look_around(delta: float) -> void:
+	_look_timer -= delta
+	if _look_timer <= 0.0:
+		_look_timer = patrol_look_interval * randf_range(0.7, 1.4)
+		_look_yaw = rotation.y + deg_to_rad(randf_range(-patrol_look_angle, patrol_look_angle))
+	rotation.y = lerp_angle(rotation.y, _look_yaw, 1.0 - exp(-turn_speed * 0.4 * delta))
+
+
+# --- Indicador de mirada ---
+## Cada enemigo necesita su propio material de ojo: los recursos de las escenas
+## se comparten, así que sin duplicarlo cambiar el color de uno cambiaría a todos.
+func _setup_eye() -> void:
+	if _eye == null:
+		return
+	var mat := _eye.get_surface_override_material(0) as StandardMaterial3D
+	if mat == null:
+		return
+	_eye.set_surface_override_material(0, mat.duplicate() as StandardMaterial3D)
+	_set_eye_color(EYE_COLOR_CALM)
+
+
+func _set_eye_color(color: Color) -> void:
+	if _eye == null:
+		return
+	var mat := _eye.get_surface_override_material(0) as StandardMaterial3D
+	if mat == null:
+		return
+	mat.albedo_color = color
+	if mat.emission_enabled:
+		mat.emission = color
 
 
 ## Sin IA propia el cuerpo solo aplica gravedad y se queda quieto; las

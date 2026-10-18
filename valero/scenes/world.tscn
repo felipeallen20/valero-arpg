@@ -28,9 +28,13 @@ transform = Transform3D(0.8660254, 0.38302222, -0.32139382, 0, 0.64278764, 0.766
 
 [node name="Enemy" parent="." unique_id=703695394 instance=ExtResource("3_4wyf3")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 1.2, -8)
+patrol_pattern = 1
+patrol_points = PackedVector3Array(-4, 0, 0, 4, 0, 0)
 
 [node name="EnemyRanged" parent="." unique_id=1653472088 instance=ExtResource("5_rnge3")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 5, 1.2, -20)
+patrol_pattern = 2
+patrol_points = PackedVector3Array(-3, 0, -3, 3, 0, -3, 3, 0, 3, -3, 0, 3)
 
 [node name="HUD" parent="." unique_id=1768720518 instance=ExtResource("4_k0juu")]
 

@@ -26,9 +26,9 @@ scripts/
 
 | Archivo | Qué hace |
 |---|---|
-| `enemy_base.gd` | Clase base de todos los enemigos: vida, gravedad, daño recibido, números de daño flotantes, muerte, localización/orientación hacia el jugador (por `NodePath` o grupo "player") y **cono de visión** (`vision_range` + `vision_angle`): `can_see_player()` comprueba distancia y ángulo, `detect_player()` marca `is_tracking` (una detección = trackeo de por vida, y un golpe recibido también detecta al jugador). La IA concreta va en las hijas. |
-| `enemy.gd` | Enemigo cuerpo a cuerpo (`extends EnemyBase`): máquina de estados IDLE → CHASE → ATTACK. En IDLE quieto y sin encarar al jugador (para que su cono de visión no apunte siempre a él); al detectarlo pasa a CHASE y lo persigue sin límite de distancia. Golpea con telegrafiado (windup) y cooldown. |
-| `enemy_ranged.gd` | Enemigo a distancia (`extends EnemyBase`): no persigue. En IDLE solo vigila su cono de visión; una vez detectado encara al jugador y apunta/dispara con su arma mientras esté dentro del rango del arma. |
+| `enemy_base.gd` | Clase base de los enemigos: vida, gravedad, daño recibido, números de daño flotantes, muerte, localización/orientación hacia el jugador (por `NodePath` o grupo "player"), **cono de visión** (`vision_range` + `vision_angle`: `can_see_player()` comprueba distancia y ángulo, `detect_player()` marca `is_tracking` — una detección = trackeo de por vida, y un golpe recibido también detecta al jugador) y **merodeo** (patrón `STAND`/`PING_PONG`/`LOOP` con `patrol_points` relativos a la aparición, pausas aleatorias y miradas alrededor). Gestiona también el **indicador de mirada** (`facing_indicator.tscn`: visor + ojo, que se pone rojo al detectar). La IA concreta va en las hijas. |
+| `enemy.gd` | Enemigo cuerpo a cuerpo (`extends EnemyBase`): máquina de estados IDLE → CHASE → ATTACK. En IDLE merodea su patrón sin encarar al jugador (para que su cono de visión no apunte siempre a él); al detectarlo pasa a CHASE y lo persigue sin límite de distancia. Golpea con telegrafiado (windup) y cooldown. |
+| `enemy_ranged.gd` | Enemigo a distancia (`extends EnemyBase`): no persigue. Sin detectar, merodea su patrulla vigilando su cono de visión; una vez detectado se queda quieto, encarado al jugador, y apunta/dispara con su arma mientras esté dentro del rango del arma. |
 | `UI/health_bar_3d.gd` | Barra de vida 3D con billboard (dos quads: fondo y relleno). Se anima con tween al recibir daño, con destello blanco, y se oculta al estar llena. |
 | `UI/damage_number.gd` | Número de daño flotante (`Label3D`): aparece sobre el objetivo con un "pop" de escala, sube y se desvanece. Se crea con el estático `DamageNumber.spawn(...)`. |
 
@@ -65,7 +65,7 @@ Para crear un arma nueva: heredar de `MeleeWeapon` o `RangedWeapon` (nunca de `W
 
 | Archivo | Qué hace |
 |---|---|
-| `world.gd` | Punto de extensión de la escena del mundo. El spawn del jugador y de los enemigos vive en `world.tscn` (transform de cada nodo). |
+| `world.gd` | Punto de extensión de la escena del mundo. El spawn del jugador y de los enemigos y el patrón de patrulla de cada enemigo viven en `world.tscn` (transform y propiedades de cada nodo). |
 
 ## Relaciones principales
 

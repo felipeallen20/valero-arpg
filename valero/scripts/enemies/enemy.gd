@@ -1,11 +1,11 @@
 class_name Enemy
 extends EnemyBase
 
-## Enemigo cuerpo a cuerpo: espera en reposo hasta ver al jugador dentro de su
-## cono de visión, lo persigue y golpea a corta distancia. La detección solo
-## ocurre una vez: a partir de ahí lo trackea aunque pierda el contacto visual.
-## La vida, el daño recibido y la localización/orientación del jugador
-## viven en EnemyBase.
+## Enemigo cuerpo a cuerpo: merodea su zona (patrulla) hasta ver al jugador
+## dentro de su cono de visión, lo persigue y golpea a corta distancia. La
+## detección solo ocurre una vez: a partir de ahí lo trackea aunque pierda el
+## contacto visual. La vida, el daño recibido y la localización/orientación
+## del jugador viven en EnemyBase.
 
 enum State { IDLE, CHASE, ATTACK, DEAD }
 
@@ -44,11 +44,12 @@ func _physics_process(delta: float) -> void:
 
 	match _state:
 		State.IDLE:
-			# Quieto y sin encarar al jugador: si lo encarase, su cono de
-			# visión apuntaría siempre a él y detectar sería solo distancia.
-			velocity.x = 0.0
-			velocity.z = 0.0
+			# Merodea su zona (o mira alrededor si no tiene patrón) sin encarar
+			# al jugador: si lo encarase, su cono de visión apuntaría siempre a
+			# él y detectar sería solo distancia.
 			_try_detect_player()
+			if _state == State.IDLE:
+				_update_patrol(delta)
 		State.CHASE:
 			_chase_player(delta)
 			_try_start_attack()

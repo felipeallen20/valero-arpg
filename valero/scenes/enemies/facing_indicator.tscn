@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[sub_resource type="BoxMesh" id="BoxMesh_visor"]
+size = Vector3(0.44, 0.16, 0.14)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_visor"]
+albedo_color = Color(0.07, 0.08, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_eye"]
+size = Vector3(0.2, 0.06, 0.05)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eye"]
+albedo_color = Color(0.8, 0.95, 1, 1)
+emission_enabled = true
+emission = Color(0.6, 0.85, 1, 1)
+emission_energy_multiplier = 1.5
+
+[node name="FacingIndicator" type="Node3D"]
+
+[node name="Visor" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_visor")
+surface_material_override/0 = SubResource("StandardMaterial3D_visor")
+
+[node name="Eye" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.075)
+mesh = SubResource("BoxMesh_eye")
+surface_material_override/0 = SubResource("StandardMaterial3D_eye")
