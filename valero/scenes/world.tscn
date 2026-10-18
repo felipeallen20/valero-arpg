@@ -19,7 +19,7 @@ player = NodePath("Player")
 transform = Transform3D(20, 0, 0, 0, 0.5, 0, 0, 0, 20, 0, 0, 0)
 shape = SubResource("BoxShape3D_wwd58")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Platform" unique_id=1545893627]
+[node name="Model" type="MeshInstance3D" parent="Platform" unique_id=1545893627]
 transform = Transform3D(20, 0, 0, 0, 0.5, 0, 0, 0, 20, 0, 0, 0)
 mesh = SubResource("BoxMesh_nb4d6")
 

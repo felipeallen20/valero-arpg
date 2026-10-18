@@ -32,7 +32,7 @@ func attack() -> bool:
 
 ## Cada tipo de arma sobrescribe esto.
 func _perform_attack() -> void:
-	print("%s ataca con %s de daño" % [weapon_name, damage])
+	pass
 
 
 ## Aplica el daño del arma a un objetivo, si sabe recibirlo.

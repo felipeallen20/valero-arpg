@@ -55,7 +55,7 @@ var _air_dash_available := true
 
 # --- Referencias ---
 @onready var _camera_pivot: Node3D = $ThirdPerson
-@onready var _weapon: Weapon = $PracticeSword   # ← ajusta a tu ruta real
+@onready var _weapon: Weapon = $PracticeSword
 
 # --- Estado ---
 # Se toma la gravedad del proyecto en lugar de fijar una propia, para respetar
@@ -262,4 +262,3 @@ func _update_sprint(direction: Vector3, delta: float) -> void:
 
 func _on_died() -> void:
 	set_physics_process(false)
-	print("Jugador muerto")
