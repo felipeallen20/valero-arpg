@@ -1,11 +1,12 @@
 class_name EnemyRanged
 extends EnemyBase
 
-## Enemigo a distancia (cápsula verde). No persigue: usa un arma a distancia
-## sin modelo ni textura (el nodo Weapon, que es quien tiene las propiedades
-## de daño, cadencia y alcance) para lanzar proyectiles visibles mientras el
-## jugador esté vivo y dentro del rango del arma. Si el jugador sale de ese
-## rango, el enemigo deja de atacar y vuelve a su espera.
+## Enemigo a distancia (cápsula verde). No persigue: espera en reposo hasta
+## detectar al jugador en su cono de visión y, a partir de ahí, usa un arma a
+## distancia sin modelo ni textura (el nodo Weapon, que es quien tiene las
+## propiedades de daño, cadencia y alcance) para lanzar proyectiles visibles
+## mientras el jugador esté vivo y dentro del rango del arma. Si el jugador
+## sale de ese rango, el enemigo deja de atacar pero sigue trackeándolo.
 
 @onready var _weapon: RangedWeapon = $Weapon
 
@@ -18,13 +19,22 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if not is_dead() and _has_live_player() and _in_weapon_range():
-		_face_player(delta)
-		_aim_weapon()
-		# El arma limita su propia cadencia (attack_speed): llamar cada frame
-		# solo marca el ritmo; al salir de rango simplemente se deja de llamar.
-		_weapon.attack()
-	# Gravedad y apoyo en el suelo (comportamiento de EnemyBase).
+	if not is_dead() and _has_live_player():
+		# Sin detectar: solo vigila su cono, sin encarar ni apuntar al jugador.
+		if not is_tracking:
+			if can_see_player():
+				detect_player()
+		else:
+			# Trackeando: siempre encarado al jugador; apunta y dispara solo
+			# mientras esté además dentro del rango del arma.
+			_face_player(delta)
+			if _in_weapon_range():
+				_aim_weapon()
+				# El arma limita su propia cadencia (attack_speed): llamar cada
+				# frame solo marca el ritmo al salir de rango.
+				_weapon.attack()
+	# Gravedad y apoyo en el suelo (comportamiento de EnemyBase). Siempre,
+	# también antes de detectar, para que no se despegue del suelo.
 	super._physics_process(delta)
 
 

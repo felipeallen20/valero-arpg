@@ -26,9 +26,9 @@ scripts/
 
 | Archivo | Qué hace |
 |---|---|
-| `enemy_base.gd` | Clase base de todos los enemigos: vida, gravedad, daño recibido, números de daño flotantes, muerte y localización/orientación hacia el jugador (por `NodePath` o grupo "player"). La IA concreta va en las hijas. |
-| `enemy.gd` | Enemigo cuerpo a cuerpo (`extends EnemyBase`): máquina de estados CHASE → ATTACK, persigue al jugador, golpea con telegrafiado (windup) y cooldown. |
-| `enemy_ranged.gd` | Enemigo a distancia (`extends EnemyBase`): no persigue; apunta su arma al jugador y ataca mientras esté dentro del rango del arma. |
+| `enemy_base.gd` | Clase base de todos los enemigos: vida, gravedad, daño recibido, números de daño flotantes, muerte, localización/orientación hacia el jugador (por `NodePath` o grupo "player") y **cono de visión** (`vision_range` + `vision_angle`): `can_see_player()` comprueba distancia y ángulo, `detect_player()` marca `is_tracking` (una detección = trackeo de por vida, y un golpe recibido también detecta al jugador). La IA concreta va en las hijas. |
+| `enemy.gd` | Enemigo cuerpo a cuerpo (`extends EnemyBase`): máquina de estados IDLE → CHASE → ATTACK. En IDLE quieto y sin encarar al jugador (para que su cono de visión no apunte siempre a él); al detectarlo pasa a CHASE y lo persigue sin límite de distancia. Golpea con telegrafiado (windup) y cooldown. |
+| `enemy_ranged.gd` | Enemigo a distancia (`extends EnemyBase`): no persigue. En IDLE solo vigila su cono de visión; una vez detectado encara al jugador y apunta/dispara con su arma mientras esté dentro del rango del arma. |
 | `UI/health_bar_3d.gd` | Barra de vida 3D con billboard (dos quads: fondo y relleno). Se anima con tween al recibir daño, con destello blanco, y se oculta al estar llena. |
 | `UI/damage_number.gd` | Número de daño flotante (`Label3D`): aparece sobre el objetivo con un "pop" de escala, sube y se desvanece. Se crea con el estático `DamageNumber.spawn(...)`. |
 
@@ -65,12 +65,12 @@ Para crear un arma nueva: heredar de `MeleeWeapon` o `RangedWeapon` (nunca de `W
 
 | Archivo | Qué hace |
 |---|---|
-| `world.gd` | Inicializa el mundo: al arrancar coloca al jugador en su posición de spawn. |
+| `world.gd` | Punto de extensión de la escena del mundo. El spawn del jugador y de los enemigos vive en `world.tscn` (transform de cada nodo). |
 
 ## Relaciones principales
 
 - `player.gd` → empuña un `Weapon` y delega stats en `PlayerStats`.
 - `weapon.gd` / `projectile.gd` → llaman `take_damage()` al objetivo y `register_combo_hit()` / `register_damage_dealt()` al empuñador.
-- `enemy_base.gd` y sus hijas → localizan al jugador por el grupo `"player"` y buscan su `PlayerStats`.
+- `enemy_base.gd` y sus hijas → localizan al jugador por el grupo `"player"`, buscan su `PlayerStats` y deciden cuándo empezar a trackearlo con su cono de visión.
 - `hud.gd` → solo escucha señales de `PlayerStats` (no busca nodos por frame).
 - `damage_number.gd` → usado por `enemy_base.gd` (daño) y `player.gd` (curación).

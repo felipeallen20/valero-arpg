@@ -1,11 +1,13 @@
 class_name Enemy
 extends EnemyBase
 
-## Enemigo cuerpo a cuerpo: persigue al jugador y golpea a corta distancia.
+## Enemigo cuerpo a cuerpo: espera en reposo hasta ver al jugador dentro de su
+## cono de visión, lo persigue y golpea a corta distancia. La detección solo
+## ocurre una vez: a partir de ahí lo trackea aunque pierda el contacto visual.
 ## La vida, el daño recibido y la localización/orientación del jugador
 ## viven en EnemyBase.
 
-enum State { CHASE, ATTACK, DEAD }
+enum State { IDLE, CHASE, ATTACK, DEAD }
 
 # --- Persecución ---
 @export_group("Persecución")
@@ -20,7 +22,8 @@ enum State { CHASE, ATTACK, DEAD }
 @export var attack_windup := 0.30      # Segundos de telegrafiado antes de pegar.
 @export var attack_cooldown := 1.20    # Segundos entre golpes.
 
-var _state: State = State.CHASE
+# Arranca en IDLE: no persigue hasta que el jugador entre en su cono.
+var _state: State = State.IDLE
 var _windup_left := 0.0
 var _cooldown_left := 0.0
 
@@ -40,6 +43,12 @@ func _physics_process(delta: float) -> void:
 		return
 
 	match _state:
+		State.IDLE:
+			# Quieto y sin encarar al jugador: si lo encarase, su cono de
+			# visión apuntaría siempre a él y detectar sería solo distancia.
+			velocity.x = 0.0
+			velocity.z = 0.0
+			_try_detect_player()
 		State.CHASE:
 			_chase_player(delta)
 			_try_start_attack()
@@ -47,6 +56,15 @@ func _physics_process(delta: float) -> void:
 			_update_attack(delta)
 
 	move_and_slide()
+
+
+## IDLE → CHASE: entra el jugador en el cono (o ya estaba trackeado, p. ej.
+## porque le has pegado) y a partir de ahí persigue sin límite de distancia.
+func _try_detect_player() -> void:
+	if not is_tracking and not can_see_player():
+		return
+	detect_player()
+	_state = State.CHASE
 
 
 # --- Persecución ---

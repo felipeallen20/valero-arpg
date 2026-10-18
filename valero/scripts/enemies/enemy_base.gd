@@ -1,9 +1,10 @@
 class_name EnemyBase
 extends CharacterBody3D
 
-## Base común de todos los enemigos: vida, gravedad, daño recibido, números
-## de daño flotantes, muerte y localización/orientación hacia el jugador.
-## La IA concreta (perseguir, ataque a distancia...) va en las clases hijas.
+## Base común de los enemigos: vida, gravedad, daño recibido, números
+## de daño flotantes, muerte, localización/orientación hacia el jugador y su
+## cono de visión (`vision_range` / `vision_angle`), que decide cuándo empiezan
+## a trackearlo. La IA concreta va en las clases hijas.
 
 signal died
 
@@ -12,6 +13,12 @@ signal died
 @export var player_path: NodePath
 ## Rapidez con la que encara al jugador (giro suave).
 @export var turn_speed := 10.0
+
+@export_group("Visión")
+## Distancia máxima (plana, en metros) a la que puede detectar al jugador.
+@export var vision_range := 12.0
+## Ángulo total del cono de visión frontal, en grados (110 = ±55°).
+@export var vision_angle := 110.0
 
 @export_group("Vida")
 @export var max_health := 75.0
@@ -22,6 +29,10 @@ var health := 0.0
 var _player: Node3D
 var _player_stats: PlayerStats
 var _gravity: float = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
+
+# true desde que el jugador fue detectado por primera vez. La detección no se
+# olvida: una vez visto, el enemigo lo trackea aunque después salga del cono.
+var is_tracking := false
 
 
 func _ready() -> void:
@@ -66,6 +77,29 @@ func _direction_to_player() -> Vector3:
 	return dir.normalized() if dir.length_squared() > 0.0001 else Vector3.ZERO
 
 
+## true si el jugador está dentro del cono de visión (distancia + ángulo con
+## el frente del enemigo, que apunta a -Z como el jugador). Es una comprobación
+## geométrica: no comprueba línea de vista, así que valdría aunque hubiera una
+## pared en medio (la arena actual no tiene obstáculos).
+func can_see_player() -> bool:
+	if _player == null or not _has_live_player():
+		return false
+	var distance := _flat_distance_to_player()
+	# Pegadísimo: da igual el ángulo, está encima y se ve.
+	if distance <= 0.05:
+		return true
+	if distance > vision_range:
+		return false
+	var forward := -global_basis.z
+	return rad_to_deg(forward.angle_to(_direction_to_player())) <= vision_angle * 0.5
+
+
+## El enemigo pasa a trackear al jugador. La detección es de por vida: no se
+## resetea aunque el jugador vuelva a salir del cono de visión.
+func detect_player() -> void:
+	is_tracking = true
+
+
 # El frente del cuerpo es -Z (convención de Godot), misma fórmula que el Player.
 func _face_player(delta: float) -> void:
 	var direction := _direction_to_player()
@@ -96,6 +130,8 @@ func _apply_gravity(delta: float) -> void:
 func take_damage(amount: float) -> void:
 	if is_dead():
 		return
+	# Un golpe revela al jugador aunque esté fuera del cono (lo estás tocando).
+	detect_player()
 	health = maxf(health - amount, 0.0)
 	_health_bar.set_ratio(health / max_health)
 	# Número de daño flotante. Se añade a la escena actual (no al enemigo)
