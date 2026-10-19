@@ -48,12 +48,39 @@ enum PatrolPattern { STAND, PING_PONG, LOOP }
 @export_group("Vida")
 @export var max_health := 75.0
 
+@export_group("Postura")
+## Puntos de postura (equilibrio) que caben en la barra. Al llenarse, el
+## enemigo se aturde. La barra es interna: no se muestra al jugador.
+@export var posture_max := 100.0
+## Segundos sin recibir golpes antes de que la postura empiece a decaer.
+@export var posture_grace_time := 1.2
+## Puntos de barra perdidos por segundo tras pasar la gracia.
+@export var posture_decay_rate := 20.0
+## Segundos que dura el aturdimiento al romperse la postura.
+@export var posture_break_duration := 1.5
+## Segundos de inmunidad a otra rotura tras recuperarse del aturdimiento.
+@export var posture_break_immunity := 1.5
+
 @onready var _health_bar: HealthBar3D = $HealthBar
+@onready var _model: MeshInstance3D = get_node_or_null("Model") as MeshInstance3D
 
 var health := 0.0
 var _player: Node3D
 var _player_stats: PlayerStats
 var _gravity: float = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
+
+# --- Postura (equilibrio): estado ---
+var posture := 0.0
+var _posture_grace_left := 0.0
+var _posture_immunity_left := 0.0
+var _stagger_left := 0.0
+
+# --- Feedback de la rotura de postura ---
+const STAGGER_TEXT_COLOR := Color(1.0, 0.72, 0.15)   # ámbar del "Aturdido".
+const STAGGER_FLASH_COLOR := Color(1.0, 0.9, 0.4)    # destello del cuerpo.
+# Parte de postura que sigue acumulando durante el aturdimiento (anti
+# stun-lock: permite encadenar roturas sin que el enemigo no pueda reaccionar).
+const POSTURE_DURING_STAGGER := 0.5
 
 # true desde que el jugador fue detectado por primera vez. La detección no se
 # olvida: una vez visto, el enemigo lo trackea aunque después salga del cono.
@@ -75,6 +102,17 @@ const EYE_COLOR_CALM := Color(0.8, 0.95, 1.0)
 const EYE_COLOR_ALERT := Color(1.0, 0.3, 0.25)
 @onready var _eye: MeshInstance3D = get_node_or_null("FacingIndicator/Eye") as MeshInstance3D
 
+# --- Material del cuerpo (para el destello de aturdimiento) ---
+var _model_material: StandardMaterial3D
+var _model_base_color := Color.WHITE
+var _flash_tween: Tween
+
+# --- Barra de postura de depuración (F3) ---
+# Alterna el jugador con F3 en builds de debug. Fuera de debug no se puede
+# encender: el input ni siquiera llega.
+static var posture_debug_visible := false
+var _posture_debug_bar: HealthBar3D
+
 
 func _ready() -> void:
 	health = max_health
@@ -85,6 +123,8 @@ func _ready() -> void:
 	_look_yaw = rotation.y
 	_look_timer = randf() * patrol_look_interval
 	_setup_eye()
+	_setup_model_material()
+	_setup_posture_debug_bar()
 	_resolve_player()
 
 
@@ -282,3 +322,102 @@ func take_damage(amount: float) -> void:
 func _die() -> void:
 	died.emit()
 	queue_free()
+
+
+# --- Postura (equilibrio) ---
+## true mientras dure el aturdimiento por postura rota. Las hijas lo consultan
+## para suspender su IA (perseguir/apuntar) mientras tanto.
+func is_staggered() -> bool:
+	return _stagger_left > 0.0
+
+
+## Empuja la barra de postura con este golpe. Lo llama el arma con el resultado
+## de su fórmula (Weapon._apply_posture): el empujón se define en el arma,
+## pero la barra y sus reglas viven aquí, en el enemigo.
+func add_posture(amount: float) -> void:
+	if is_dead() or _posture_immunity_left > 0.0:
+		return
+	# Durante el aturdimiento la barra avanza a medias (anti stun-lock).
+	if is_staggered():
+		amount *= POSTURE_DURING_STAGGER
+	posture = minf(posture + amount, posture_max)
+	_posture_grace_left = posture_grace_time
+	if posture >= posture_max and not is_staggered():
+		break_posture()
+
+
+## Rota la postura: barra a cero, aturdimiento y feedback (texto "Aturdido"
+## y destello del cuerpo). El texto usa el mismo patrón que los números de
+## daño flotantes.
+func break_posture() -> void:
+	posture = 0.0
+	_stagger_left = posture_break_duration
+	DamageNumber.spawn(
+		get_tree().current_scene, global_position, 0.0, STAGGER_TEXT_COLOR, "Aturdido"
+	)
+	_flash_stagger()
+
+
+## Descuenta el aturdimiento (al llegar a cero aplica la inmunidad posterior)
+## y, cuando toca, hace decaer la postura tras la gracia. Lo llaman las hijas
+## cada frame; también actualiza la barra de depuración.
+func _update_posture(delta: float) -> void:
+	if is_staggered():
+		_stagger_left = maxf(_stagger_left - delta, 0.0)
+		if _stagger_left <= 0.0:
+			_posture_immunity_left = posture_break_immunity
+	elif _posture_immunity_left > 0.0:
+		_posture_immunity_left -= delta
+	elif _posture_grace_left > 0.0:
+		_posture_grace_left -= delta
+	else:
+		posture = maxf(posture - posture_decay_rate * delta, 0.0)
+	_update_posture_debug_bar()
+
+
+# --- Feedback de la rotura ---
+
+## Cada enemigo necesita su propio material de cuerpo: duplica el de la escena
+## para poder destellar sin cambiar el material original (mismo criterio que
+## el ojo del indicador de mirada).
+func _setup_model_material() -> void:
+	if _model == null:
+		return
+	var mat := _model.get_surface_override_material(0) as StandardMaterial3D
+	if mat == null:
+		return
+	_model_material = mat.duplicate() as StandardMaterial3D
+	_model.set_surface_override_material(0, _model_material)
+	_model_base_color = _model_material.albedo_color
+
+
+func _flash_stagger() -> void:
+	if _model_material == null:
+		return
+	if _flash_tween != null:
+		_flash_tween.kill()
+	_model_material.albedo_color = STAGGER_FLASH_COLOR
+	_flash_tween = create_tween()
+	_flash_tween.tween_property(_model_material, "albedo_color", _model_base_color, 0.25)
+
+
+# --- Barra de postura de depuración (F3) ---
+
+func _setup_posture_debug_bar() -> void:
+	_posture_debug_bar = HealthBar3D.new()
+	_posture_debug_bar.bar_size = Vector2(1.0, 0.08)
+	_posture_debug_bar.fill_color = Color(0.95, 0.78, 0.2)
+	_posture_debug_bar.hide_when_full = false
+	_posture_debug_bar.visible = false
+	add_child(_posture_debug_bar)
+	# Encima de la barra de vida (y = 1.45 en las escenas de enemigo).
+	_posture_debug_bar.position = Vector3(0.0, 1.65, 0.0)
+
+
+func _update_posture_debug_bar() -> void:
+	if _posture_debug_bar == null:
+		return
+	if _posture_debug_bar.visible != posture_debug_visible:
+		_posture_debug_bar.visible = posture_debug_visible
+	if posture_debug_visible:
+		_posture_debug_bar.set_ratio(posture / maxf(posture_max, 0.01), false)

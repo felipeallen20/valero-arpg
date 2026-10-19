@@ -17,6 +17,7 @@ albedo_color = Color(0.28, 0.68, 0.34, 1)
 collision_layer = 4
 script = ExtResource("1_rnge1")
 max_health = 40.0
+posture_max = 60.0
 
 [node name="Model" type="MeshInstance3D" parent="."]
 mesh = SubResource("CapsuleMesh_rnge")

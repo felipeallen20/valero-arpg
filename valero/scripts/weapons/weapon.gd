@@ -26,6 +26,10 @@ signal attacked
 @export_range(0.1, 10.0, 0.05, "or_greater") var heavy_attack_speed := 0.8
 ## Multiplicador de daño del ataque pesado sobre el daño normal (2.0 = doble).
 @export var heavy_damage_multiplier := 2.0
+## Multiplicador de postura (equilibrio) del ataque pesado. Su daño ya dobla
+## la postura por fórmula; esto lo dobla otra vez: el pesado es la herramienta
+## de ruptura (1.5 = +50% de empujón sobre su propio cálculo).
+@export var heavy_posture_multiplier := 1.5
 
 @export_group("Combo")
 ## Golpes seguidos del empuñador que activan el combo de ESTE arma.
@@ -38,6 +42,15 @@ signal attacked
 ## Quién empuña el arma (el Player). Así el arma no se daña a sí misma
 ## y puede leer el estado de combo del empuñador.
 var wielder: Node3D
+
+# --- Postura (equilibrio) ---
+# Fórmula del empujón de postura de ESTE golpe. La barra (el estado) vive en
+# el objetivo (EnemyBase); aquí solo se define cuánto empuja cada golpe, igual
+# que con el combo: el arma define, el objetivo guarda.
+const POSTURE_BASE := 12.0           # Empuje fijo de cualquier golpe conectado.
+const POSTURE_PER_DAMAGE := 0.8      # Parte del empujón proporcional al daño.
+const POSTURE_PER_COMBO_HIT := 0.08  # +8% de empujón por golpe de combo previo.
+const POSTURE_COMBO_CAP := 6         # Tope del bonus de combo (x1.48).
 
 var _next_attack_time_ms := 0
 # true si el swing en curso es el pesado (afecta al daño: ver get_current_damage).
@@ -131,11 +144,27 @@ func deal_damage(target: Node) -> void:
 		var damage_dealt := get_current_damage()
 		target.take_damage(damage_dealt)
 		_on_hit_landed(target, damage_dealt)
+		# La postura se calcula con el combo ANTES de contar este golpe, igual
+		# que el daño: el primer golpe de la racha empuja con x1.0.
+		_apply_posture(target, damage_dealt)
 		_register_combo_hit()
 		# El empuñador puede usar ese daño para algo más (curación por
 		# contragolpe, etc.). Solo lo procesa quien exponga el método.
 		if wielder != null and wielder.has_method("register_damage_dealt"):
 			wielder.register_damage_dealt(damage_dealt)
+
+
+## Empuja la barra de postura (equilibrio) del objetivo con este golpe.
+## Solo aplica si el objetivo expone add_posture (los enemigos, vía EnemyBase):
+## al jugador no le afecta en v1.
+func _apply_posture(target: Node, damage_dealt: float) -> void:
+	if not target.has_method("add_posture"):
+		return
+	var build := (POSTURE_BASE + damage_dealt * POSTURE_PER_DAMAGE) \
+		* (1.0 + POSTURE_PER_COMBO_HIT * minf(float(get_wielder_combo_count()), POSTURE_COMBO_CAP))
+	if _is_heavy_swing:
+		build *= heavy_posture_multiplier
+	target.add_posture(build)
 
 
 ## Punto de extensión para efectos al impactar (sangrado, quemadura, etc.).

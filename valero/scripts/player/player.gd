@@ -390,6 +390,7 @@ func register_damage_dealt(amount: float) -> void:
 # --- Depuración (solo builds de debug) ---
 # F1: daño de un golpe fuerte para disparar la ventana de recuperación.
 # F2: curación completa para comprobar el feedback.
+# F3: muestra/oculta la barra de postura (equilibrio) de los enemigos.
 const DEBUG_DAMAGE := 40.0
 
 
@@ -402,6 +403,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				stats.take_damage(DEBUG_DAMAGE)
 			KEY_F2:
 				stats.heal(stats.max_health)
+			KEY_F3:
+				EnemyBase.posture_debug_visible = not EnemyBase.posture_debug_visible
 
 
 # --- Combo: estado ---

@@ -30,17 +30,19 @@ func _init() -> void:
 ## Crea y anima un número de daño en la posición de mundo indicada.
 ## El nodo se añade a parent (mejor la escena actual, para que el número
 ## sobreviva si el enemigo muere justo después del golpe).
-## color permite variantes (verde de curación, etc.); por defecto, el rojo.
+## color permite variantes (verde de curación, ámbar de aturdimiento, etc.);
+## custom_text, un texto libre ("Aturdido") que sustituye al número.
 static func spawn(
 	parent: Node,
 	world_position: Vector3,
 	amount: float,
-	color := Color(0.92, 0.16, 0.14)
+	color := Color(0.92, 0.16, 0.14),
+	custom_text := ""
 ) -> void:
 	if parent == null:
 		return
 	var number := DamageNumber.new()
-	number.text = str(int(round(amount)))
+	number.text = custom_text if custom_text != "" else str(int(round(amount)))
 	number.modulate = color
 	parent.add_child(number)
 	number.global_position = world_position + Vector3(

@@ -4,10 +4,13 @@ extends EnemyBase
 ## Enemigo cuerpo a cuerpo: merodea su zona (patrulla) hasta ver al jugador
 ## dentro de su cono de visión, lo persigue y golpea a corta distancia. La
 ## detección solo ocurre una vez: a partir de ahí lo trackea aunque pierda el
-## contacto visual. La vida, el daño recibido y la localización/orientación
-## del jugador viven en EnemyBase.
+## contacto visual. La vida, el daño recibido, la postura (equilibrio) y el
+## aturdimiento viven en EnemyBase; aquí está la persecución y el golpe.
+##
+## La postura rota manda por encima de cualquier estado: interrumpe el
+## telegrafiado en curso y aturde al enemigo (State.STAGGER).
 
-enum State { IDLE, CHASE, ATTACK, DEAD }
+enum State { IDLE, CHASE, ATTACK, STAGGER, DEAD }
 
 # --- Persecución ---
 @export_group("Persecución")
@@ -34,6 +37,20 @@ func _physics_process(delta: float) -> void:
 
 	_apply_gravity(delta)
 	_update_timers(delta)
+	_update_posture(delta)
+
+	# La postura rota (equilibrio) interrumpe lo que esté haciendo.
+	if is_staggered():
+		if _state != State.STAGGER:
+			_enter_stagger()
+		_update_stagger(delta)
+		move_and_slide()
+		return
+	if _state == State.STAGGER:
+		# Recuperado: vuelve a perseguir y no ataca al instante (cooldown
+		# completo, igual que tras aplicar un golpe normal).
+		_state = State.CHASE
+		_cooldown_left = attack_cooldown
 
 	# Sin jugador vivo no hay a qué perseguir.
 	if not _has_live_player():
@@ -121,6 +138,24 @@ func _deal_attack() -> void:
 	if _flat_distance_to_player() > attack_range:
 		return
 	_player_stats.take_damage(attack_damage)
+
+
+# --- Aturdimiento por postura rota ---
+# Entra en STAGGER: frena en seco y cancela el telegrafiado en curso (el golpe
+# que estuviera preparando se pierde: ese es el premio de la rotura).
+func _enter_stagger() -> void:
+	_state = State.STAGGER
+	_windup_left = 0.0
+	velocity.x = 0.0
+	velocity.z = 0.0
+
+
+# Aturdimiento: quieto, sin atacar y encarado al jugador. El temporizador lo
+# descuenta EnemyBase._update_posture, que al llegar a cero aplica la
+# inmunidad posterior y devuelve el control a esta IA.
+func _update_stagger(delta: float) -> void:
+	_brake(delta)
+	_face_player(delta)
 
 
 # Las utilidades de distancia y orientación (_flat_distance_to_player,

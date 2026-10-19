@@ -20,17 +20,20 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_update_posture(delta)
+
 	var live := not is_dead() and _has_live_player()
 	if live and not is_tracking and can_see_player():
 		detect_player()
 
 	if live and is_tracking:
 		# Ya no merodea: quieto y encarado al jugador; apunta y dispara solo
-		# mientras esté además dentro del rango del arma.
+		# mientras esté además dentro del rango del arma. Aturdido por postura
+		# rota (is_staggered), no apunta ni dispara mientras dure.
 		velocity.x = 0.0
 		velocity.z = 0.0
 		_face_player(delta)
-		if _in_weapon_range():
+		if not is_staggered() and _in_weapon_range():
 			_aim_weapon()
 			# El arma limita su propia cadencia (attack_speed): llamar cada
 			# frame solo marca el ritmo al salir de rango.
