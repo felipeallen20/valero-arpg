@@ -257,15 +257,20 @@ func _turn_body(direction: Vector3, delta: float) -> void:
 	rotation.y = lerp_angle(rotation.y, target_angle, 1.0 - exp(-TURN_SPEED * delta))
 
 # --- Ataque ---
-# Mantener el clic encadena ataques; el cooldown del arma marca el ritmo.
+# Mantener el clic izquierdo encadena golpes normales; el clic derecho lanza el
+# ataque pesado del arma (más lento y con más daño). El cooldown del arma marca
+# el ritmo de ambos.
 # El combo NO avanza aquí: solo avanza si el golpe conecta con un enemigo
 # (el arma lo notifica vía register_combo_hit).
 func _try_attack() -> void:
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		return  # con el mouse liberado (Esc) el clic no debe atacar
-	if Input.is_action_pressed("attack"):
+	if Input.is_action_pressed("attack_heavy"):
+		_weapon.heavy_attack()
+	elif Input.is_action_pressed("attack"):
 		_weapon.attack()
-		
+
+
 # --- Dash ---
 func _try_dodge() -> void:
 	if not Input.is_action_just_pressed("dodge"):

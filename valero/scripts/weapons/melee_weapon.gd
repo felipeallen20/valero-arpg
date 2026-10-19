@@ -26,6 +26,15 @@ func _perform_attack() -> void:
 	_anim.play("attack")
 
 
+## El peso del ataque pesado está en su animación (más larga que la normal).
+## Si un arma aún no tiene "heavy_attack", cae en la normal para no romper el golpe.
+func _perform_heavy_attack() -> void:
+	if _anim.has_animation("heavy_attack"):
+		_anim.play("heavy_attack")
+	else:
+		_perform_attack()
+
+
 # Los llama la animación (Call Method Track).
 func enable_hit() -> void:
 	_already_hit.clear()

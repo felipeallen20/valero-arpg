@@ -1,22 +1,10 @@
 [gd_scene format=3 uid="uid://c5sjv3oxst7b3"]
 
-[ext_resource type="Script" path="res://scripts/weapons/practice_sword.gd" id="1_hvg78"]
-[ext_resource type="ArrayMesh" uid="uid://d00dvlivnxlyv" path="res://assets/models/weapons/swords/practice_sword/practice_sword.obj" id="2_o4rta"]
-[ext_resource type="Texture2D" uid="uid://du4nq6fnx6vxg" path="res://assets/models/weapons/swords/practice_sword/mango.png" id="3_ekm0b"]
-[ext_resource type="Texture2D" uid="uid://deki3bc2w0c0r" path="res://assets/models/weapons/swords/practice_sword/base.png" id="4_auo53"]
-[ext_resource type="Texture2D" uid="uid://dvgn2mmpf3bd7" path="res://assets/models/weapons/swords/practice_sword/hoja.png" id="5_rt4hf"]
+[ext_resource type="Script" uid="uid://47kclm8n6o2x" path="res://scripts/weapons/practice_sword.gd" id="1_hvg78"]
+[ext_resource type="PackedScene" uid="uid://chm1i668pdb3t" path="res://assets/models/weapons/swords/practice_sword/sword.fbx" id="2_swrd"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_jxsi6"]
 size = Vector3(1, 1.0302734, 1)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_36qle"]
-albedo_texture = ExtResource("3_ekm0b")
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ekm0b"]
-albedo_texture = ExtResource("4_auo53")
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_auo53"]
-albedo_texture = ExtResource("5_rt4hf")
 
 [sub_resource type="Animation" id="Animation_ekm0b"]
 length = 0.6
@@ -27,6 +15,18 @@ tracks/0/path = NodePath("Pivot:rotation")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 0, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
 "times": PackedFloat32Array(0),
 "transitions": PackedFloat32Array(1),
 "update": 0,
@@ -66,16 +66,51 @@ tracks/1/keys = {
 }]
 }
 
+[sub_resource type="Animation" id="Animation_rt4hf"]
+resource_name = "heavy_attack"
+length = 1.25
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.25, 0.375, 0.4375, 0.5, 0.5625, 0.625, 0.6875, 0.75, 0.8125, 0.875, 0.9375, 1, 1.0625, 1.125, 1.1875, 1.25),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(0.2617994, 0, 0), Vector3(0.08726646, 0, 0), Vector3(-0.08726646, 0, 0), Vector3(-0.17453292, 0, 0), Vector3(-0.2617994, 0, 0), Vector3(-0.34906584, 0, 0), Vector3(-0.5235988, 0, 0), Vector3(-0.6981317, 0, 0), Vector3(-0.87266463, 0, 0), Vector3(-1.0471976, 0, 0), Vector3(-1.3962634, 0, 0), Vector3(-1.2217305, 0, 0), Vector3(-0.7853982, 0, 0), Vector3(-0.43633232, 0, 0), Vector3(-0.2617994, 0, 0), Vector3(0, 0, 0)]
+}
+tracks/1/type = "method"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0.91666669, 1),
+"transitions": PackedFloat32Array(1, 1),
+"values": [{
+"args": [],
+"method": &"enable_hit"
+}, {
+"args": [],
+"method": &"disable_hit"
+}]
+}
+
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_rt4hf"]
 _data = {
 &"RESET": SubResource("Animation_ekm0b"),
-&"attack": SubResource("Animation_auo53")
+&"attack": SubResource("Animation_auo53"),
+&"heavy_attack": SubResource("Animation_rt4hf")
 }
 
 [node name="PracticeSword" type="Node3D" unique_id=938474064]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, -0.16624108, 0)
+transform = Transform3D(2.25, 0, 0, 0, 2.25, 0, 0, 0, 2.25, 0, -0.16624108, 0)
 script = ExtResource("1_hvg78")
 attack_speed = 1.95
+heavy_attack_speed = 0.8
 
 [node name="Pivot" type="Node3D" parent="." unique_id=1928715599]
 
@@ -88,11 +123,8 @@ collision_mask = 4
 transform = Transform3D(0.125, 0, 0, 0, 0.5500001, 0, 0, 0, 0.05, 0.007122705, 0.67695725, 0.020778982)
 shape = SubResource("BoxShape3D_jxsi6")
 
-[node name="Mesh" type="MeshInstance3D" parent="Pivot" unique_id=1804440856]
-mesh = ExtResource("2_o4rta")
-surface_material_override/0 = SubResource("StandardMaterial3D_36qle")
-surface_material_override/1 = SubResource("StandardMaterial3D_ekm0b")
-surface_material_override/2 = SubResource("StandardMaterial3D_auo53")
+[node name="Model" parent="Pivot" instance=ExtResource("2_swrd")]
+transform = Transform3D(364.8, 0, 0, 0, 364.8, 0, 0, 0, 364.8, 0, -0.1893, 0)
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=265341000]
 libraries/ = SubResource("AnimationLibrary_rt4hf")

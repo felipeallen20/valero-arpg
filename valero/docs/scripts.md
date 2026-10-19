@@ -18,7 +18,7 @@ scripts/
 
 | Archivo | Qué hace |
 |---|---|
-| `player.gd` | Control del jugador: movimiento en suelo/aire, salto (con coyote time, buffer y altura variable), sprint con estamina, dash con i-frames, ataque con la arma activa, estado del combo (el jugador guarda el contador; el arma define su patrón) y feedback visual de combo (contorno amarillo en el modelo). |
+| `player.gd` | Control del jugador: movimiento en suelo/aire, salto (con coyote time, buffer y altura variable), sprint con estamina, dash con i-frames, ataque con la arma activa (clic izquierdo = golpe normal, clic derecho = golpe pesado), estado del combo (el jugador guarda el contador; el arma define su patrón) y feedback visual de combo (contorno amarillo en el modelo). |
 | `player_camera.gd` | Cámara en tercera persona: seguimiento del jugador con SpringArm3D, ratón con captura/pinza, zoom con la rueda y toggle de ratón con Esc. |
 | `player_stats.gd` | Estadísticas del jugador (vida, estamina, muerte) como nodo independiente. Gestiona la regeneración de estamina, las invulnerabilidades y el sistema de **recuperación por contragolpe** (recibir daño abre una ventana en la que el daño infligido cura vida). Emite señales que consumen HUD y player. |
 
@@ -36,8 +36,8 @@ scripts/
 
 | Archivo | Qué hace |
 |---|---|
-| `weapon.gd` | **Clase base** de armas (`class_name Weapon`): define daño, cadencia, alcance y el **contrato de combo** (patrón y efecto) que comparten todas las armas. No guarda estado de combo (vive en el empuñador). Expone los puntos de extensión `get_damage_for_combo()` (efecto del combo sobre el daño) y `_on_hit_landed()` (efectos al impactar, p. ej. sangrado). |
-| `melee_weapon.gd` | **Categoría melee** (`extends Weapon`): comportamiento compartido por todas las armas cuerpo a cuerpo. Reproduce la animación de ataque y activa/desactiva una hitbox según sus frames (Call Method Track), evitando dañar dos veces al mismo objetivo en un swing. No es un arma concreta. |
+| `weapon.gd` | **Clase base** de armas (`class_name Weapon`): define daño, cadencia, alcance, **ataque pesado** (`heavy_attack()`: más lento que `attack()` y con `heavy_damage_multiplier` de daño) y el **contrato de combo** (patrón y efecto) que comparten todas las armas. No guarda estado de combo (vive en el empuñador). Expone los puntos de extensión `get_damage_for_combo()` (efecto del combo sobre el daño) y `_on_hit_landed()` (efectos al impactar, p. ej. sangrado). |
+| `melee_weapon.gd` | **Categoría melee** (`extends Weapon`): comportamiento compartido por todas las armas cuerpo a cuerpo. Reproduce la animación de ataque (y la pesada `heavy_attack` si el arma la tiene) y activa/desactiva una hitbox según sus frames (Call Method Track), evitando dañar dos veces al mismo objetivo en un swing. No es un arma concreta. |
 | `ranged_weapon.gd` | **Categoría a distancia** (`extends Weapon`): comportamiento compartido por todas las armas de rango. Sin modelo propio; cada disparo instancia la escena del proyectil en el Muzzle orientado hacia donde apunte el arma. No es un arma concreta. |
 | `practice_sword.gd` | **Arma concreta** (`extends MeleeWeapon`): la espada de práctica. No sobrescribe nada: usa el combo básico de `Weapon` (sube el daño). Sirve de plantilla de cómo se crea un arma concreta melee. |
 | `practice_gun.gd` | **Arma concreta** (`extends RangedWeapon`): la pistola de práctica, usada por el enemigo a distancia. No sobrescribe nada; hereda el disparo de proyectiles de `RangedWeapon`. Referencia de arma concreta para la categoría a distancia. |
