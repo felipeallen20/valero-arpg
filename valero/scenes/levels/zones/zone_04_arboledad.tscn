@@ -1,0 +1,41 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="mat_suelo"]
+albedo_color = Color(0.4, 0.56, 0.36, 1)
+
+[sub_resource type="StandardMaterial3D" id="mat_tronco"]
+albedo_color = Color(0.42, 0.31, 0.22, 1)
+
+[node name="Zone04_Arboledad" type="Node3D"]
+
+[node name="Geometria" type="Node3D" parent="."]
+
+[node name="Suelo" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(10, 1, 18)
+position = Vector3(0, -0.5, -127)
+material = SubResource("mat_suelo")
+
+[node name="MuroIzq" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(1, 5, 18)
+position = Vector3(-5.5, 2.5, -127)
+material = SubResource("mat_tronco")
+
+[node name="MuroDer" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(1, 5, 18)
+position = Vector3(5.5, 2.5, -127)
+material = SubResource("mat_tronco")
+
+[node name="Tronco1" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(0.8, 4, 0.8)
+position = Vector3(-3.5, 2, -124)
+material = SubResource("mat_tronco")
+
+[node name="Tronco2" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(0.8, 4, 0.8)
+position = Vector3(3.5, 2, -131)
+material = SubResource("mat_tronco")

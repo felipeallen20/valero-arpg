@@ -1,0 +1,137 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="mat_suelo"]
+albedo_color = Color(0.4, 0.56, 0.36, 1)
+
+[sub_resource type="StandardMaterial3D" id="mat_tronco"]
+albedo_color = Color(0.42, 0.31, 0.22, 1)
+
+[sub_resource type="BoxShape3D" id="shape_trigger"]
+size = Vector3(8, 3, 2)
+
+[node name="Zone05_Clearing" type="Node3D"]
+
+[node name="Geometria" type="Node3D" parent="."]
+
+[node name="SueloArena" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(24, 1, 24)
+position = Vector3(0, -0.5, -148)
+material = SubResource("mat_suelo")
+
+[node name="SueloSalida" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(28, 1, 12)
+position = Vector3(0, -0.5, -166)
+material = SubResource("mat_suelo")
+
+[node name="MuroIzqArena" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(1, 5, 24)
+position = Vector3(-12.5, 2.5, -148)
+material = SubResource("mat_tronco")
+
+[node name="MuroDerArena" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(1, 5, 24)
+position = Vector3(12.5, 2.5, -148)
+material = SubResource("mat_tronco")
+
+[node name="EntradaIzq" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(5, 4, 2)
+position = Vector3(-6.5, 2, -137)
+material = SubResource("mat_tronco")
+
+[node name="EntradaDer" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(5, 4, 2)
+position = Vector3(6.5, 2, -137)
+material = SubResource("mat_tronco")
+
+[node name="BordeNor1" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(3, 4, 3)
+position = Vector3(-10, 2, -157)
+material = SubResource("mat_tronco")
+
+[node name="BordeNor2" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(3, 4, 3)
+position = Vector3(-5, 2, -158.5)
+material = SubResource("mat_tronco")
+
+[node name="BordeNor3" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(3, 4, 3)
+position = Vector3(0, 2, -159)
+material = SubResource("mat_tronco")
+
+[node name="BordeNor4" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(3, 4, 3)
+position = Vector3(5, 2, -158.5)
+material = SubResource("mat_tronco")
+
+[node name="BordeNor5" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(3, 4, 3)
+position = Vector3(10, 2, -157)
+material = SubResource("mat_tronco")
+
+[node name="BordeOeste" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(3, 4, 3)
+position = Vector3(-10.5, 2, -148)
+material = SubResource("mat_tronco")
+
+[node name="BordeEste" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(3, 4, 3)
+position = Vector3(10.5, 2, -148)
+material = SubResource("mat_tronco")
+
+[node name="Tocon1" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(2.5, 2.5, 2.5)
+position = Vector3(-7, 1.25, -143)
+material = SubResource("mat_tronco")
+
+[node name="Tocon2" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(2.5, 2.5, 2.5)
+position = Vector3(6, 1.25, -152)
+material = SubResource("mat_tronco")
+
+[node name="Tocon3" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(2.5, 2.5, 2.5)
+position = Vector3(-5, 1.25, -153)
+material = SubResource("mat_tronco")
+
+[node name="MuroIzqSalida" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(1, 5, 12)
+position = Vector3(-14.5, 2.5, -166)
+material = SubResource("mat_tronco")
+
+[node name="MuroDerSalida" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(1, 5, 12)
+position = Vector3(14.5, 2.5, -166)
+material = SubResource("mat_tronco")
+
+[node name="MuroFondo" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(30, 5, 1)
+position = Vector3(0, 2.5, -172.5)
+material = SubResource("mat_tronco")
+
+[node name="BossTrigger" type="Area3D" parent="."]
+position = Vector3(0, 1.5, -137)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BossTrigger"]
+shape = SubResource("shape_trigger")
+
+[node name="ExitMarker" type="Marker3D" parent="."]
+position = Vector3(0, 1, -170)

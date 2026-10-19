@@ -1,0 +1,68 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="mat_suelo"]
+albedo_color = Color(0.4, 0.56, 0.36, 1)
+
+[sub_resource type="StandardMaterial3D" id="mat_tronco"]
+albedo_color = Color(0.42, 0.31, 0.22, 1)
+
+[sub_resource type="StandardMaterial3D" id="mat_agua"]
+albedo_color = Color(0.33, 0.48, 0.55, 1)
+
+[node name="Zone01_Senda" type="Node3D"]
+
+[node name="Geometria" type="Node3D" parent="."]
+
+[node name="SueloA" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(12, 1, 12)
+position = Vector3(0, -0.5, -20)
+material = SubResource("mat_suelo")
+
+[node name="LechoRio1" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(12, 1, 3)
+position = Vector3(0, -2.1, -27.5)
+material = SubResource("mat_agua")
+
+[node name="SueloB" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(12, 1, 11)
+position = Vector3(0, -0.5, -34.5)
+material = SubResource("mat_suelo")
+
+[node name="Terraza" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(12, 1, 18)
+position = Vector3(0, 1.1, -49)
+material = SubResource("mat_suelo")
+
+[node name="SueloC" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(12, 1, 16)
+position = Vector3(0, -0.5, -66)
+material = SubResource("mat_suelo")
+
+[node name="LechoRio2" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(12, 1, 8)
+position = Vector3(0, -2.1, -78)
+material = SubResource("mat_agua")
+
+[node name="TroncoPuente" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(1.5, 0.5, 6.4)
+position = Vector3(2, -0.25, -77)
+material = SubResource("mat_tronco")
+
+[node name="MuroIzq" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(1, 8, 66)
+position = Vector3(-6.5, -0.5, -47)
+material = SubResource("mat_tronco")
+
+[node name="MuroDer" type="CSGBox3D" parent="Geometria"]
+use_collision = true
+size = Vector3(1, 8, 66)
+position = Vector3(6.5, -0.5, -47)
+material = SubResource("mat_tronco")
